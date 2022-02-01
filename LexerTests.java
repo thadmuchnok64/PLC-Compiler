@@ -12,6 +12,7 @@ import edu.ufl.cise.plc.IToken;
 import edu.ufl.cise.plc.IToken.Kind;
 import edu.ufl.cise.plc.LexicalException;
 
+// Hello, Thad was here.
 
 public class LexerTests {
 
