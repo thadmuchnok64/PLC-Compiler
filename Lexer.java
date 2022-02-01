@@ -1,4 +1,4 @@
-public class Lexer extends ILexer {
+public class Lexer implements ILexer {
     
 
     
