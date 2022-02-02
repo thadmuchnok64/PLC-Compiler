@@ -9,6 +9,26 @@ public class Lexer implements ILexer {
     ArrayList<ArrayList<Character>> chars;
     int pos = 0;
     int line = 0;
+    int currentIndex = 0;
+
+    //Returns next object in array, and iterates the current index
+    @Override
+    public IToken next() throws LexicalException {
+        currentIndex++;
+        if(currentIndex>=tokens.size()){
+            currentIndex = 0;
+        }
+        return tokens.get(currentIndex);
+    }
+
+    //Returns the next token in the array.
+    @Override
+    public IToken peek() throws LexicalException {
+        if(currentIndex>=tokens.size()){
+            return tokens.get(0);
+        }
+        return tokens.get(currentIndex);
+    }
 
     private enum State {nSTART, IN_IDENT, HAVE_ZERO, HAVE_DOT, IN_FLOAT, IN_NUM, HAVE_EQ, HAVE_MINUS};
     private State state;
