@@ -31,4 +31,22 @@ public class Token implements IToken
         }
     }
 
+    @Override
+    public String getStringValue() {
+        if(kind == Kind.STRING_LIT)
+        {
+            String result = "";
+            for(char c: input.toCharArray())
+            {
+                if(c == '"')
+                {
+                    continue;
+                }
+                result.concat(Character.toString(c));
+            }
+        }
+        return result;
+    }
+    
+
 }
