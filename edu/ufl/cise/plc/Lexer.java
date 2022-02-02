@@ -61,17 +61,34 @@ public class Lexer implements ILexer {
             //test switch - TM
                 State currentState = State.START;
                 switch(ch){
+                    //Check for ident starter
                     case 'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','$','_':
-
+                        if(currentState!=State.IN_IDENT){
+                            //do stuff here
+                        }
+                        currentState = State.IN_IDENT;
                     break;
+                    // Check for Num
                     case '0','1','2','3','4','5','6','7','8','9':
-                        if(currentState==State.IN_IDENT)
+                        switch(currentState)
+                        {
+                            case IN_IDENT,HAVE_DOT,IN_FLOAT:
+                            break;
+                            default:
+                            currentState=State.IN_NUM;
+                            break;
+                        }
+                         
                     break;
                     case '.':
-                    //check for float
+                    //check for Float
                     if(currentState == state.HAVE_ZERO||currentState==state.IN_NUM){
-                        
+                        currentState = State.HAVE_DOT;
+                    } else {
+                        currentState = State.IN_FLOAT;
                     }
+                    break;
+                    case '\b','\t','\n','\f','\r','"','\'','\\':
                     break;
                 }
 
