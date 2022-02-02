@@ -5,12 +5,18 @@ public class Token implements IToken
     
     Kind kind;
     String input;
+    int pos;
+    int length;
 
-@Override
+    
 
-// Returns the kind - TM
-public Kind getKind() {
-    return kind;
-}
+    // Returns the kind - TM
+    @Override public Kind getKind() {
+        return kind;
+    }
 
+    @Override public String getText()
+    {
+        return input;
+    }
 }
