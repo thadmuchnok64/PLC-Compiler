@@ -2,25 +2,23 @@ import java.util.ArrayList;
 
 public class Lexer implements ILexer {
     
+    ArrayList<ArrayList<Token>> tokens;
     ArrayList<ArrayList<Character>> chars;
     int pos = 0;
+
 
     private enum State {START, IN_IDENT, HAVE_ZERO, HAVE_DOT, IN_FLOAT, IN_NUM, HAVE_EQ, HAVE_MINUS};
     private State state;
     public Lexer Lexer(String input)
     {
-        state = State.START;
-        LexerTime(input);
-    }
+        char[] chars = input.toCharArray();
+        for(char c : chars){
 
-    public LexerTime(String input)
-    {
-        while(true)
-        {
-            char ch = chars.get(pos);
+            char ch = chars[pos];
             switch(state)
             {
                 case START:
+
                 break;
                 case IN_IDENT:
                 break;
@@ -38,6 +36,8 @@ public class Lexer implements ILexer {
                 break;
             }
         }
+        state = State.START;
+        
     }
-
+    
 }
