@@ -14,13 +14,12 @@ public class Token implements IToken
 
     // --------------- //
 
-    public Token(Kind _kind, String _input, int _pos, int _length, SourceLocation _sourceLocation)
+    public Token(Kind _kind, String _input, int _pos, int _length, int line, int column)
     {
         kind = _kind;
         input = _input;
         pos = _pos;
-        length = _length;
-        sourceLocation = _sourceLocation;
+        sourceLocation = new SourceLocation(line, column);
     }
 
     // Returns the kind - TM

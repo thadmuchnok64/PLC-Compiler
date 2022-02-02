@@ -11,7 +11,7 @@ public class Lexer implements ILexer {
 
     private enum State {START, IN_IDENT, HAVE_ZERO, HAVE_DOT, IN_FLOAT, IN_NUM, HAVE_EQ, HAVE_MINUS};
     private State state;
-    public Lexer Lexer(String input)
+    public Lexer(String input)
     {
         char[] charArray = input.toCharArray();
         for(char c: charArray)
@@ -29,9 +29,10 @@ public class Lexer implements ILexer {
         }
 
 
-        for(char c : charArray){
+        for(int i = 0; i < chars.length(); i++)
+            for(int j = 0; chars.get(i).length; j++){
 
-            char ch = charArray[pos];
+            char ch = chars.get(i).get(j);
             int startPos;
             switch(state)
             {
@@ -41,10 +42,27 @@ public class Lexer implements ILexer {
                     {
                         case ' ', '\t', '\n', '\r' :
                             {pos++;}
-                        break;
+                            break;
                         
                         case '+':
-                            Token newToken = new Token(Kind.PLUS, ch, pos, 1, _sourceLocation)
+                        {
+                            Token newToken = new Token(Kind.PLUS, ch, pos, 1, i, j);
+                            break;
+                        }
+                        
+                        
+
+                        case '*':
+                        {
+                            Token newToken = new Token(Kind.TIMES, ch, pos, 1, i, j);
+                        }
+                            
+                        case '=':
+                        {
+                            Token newToken = new Token(Kind.MINUS, ch, pos, 1, i, j);
+                            break;
+                        }
+                            
                     }
                 break;
                 case IN_IDENT:
