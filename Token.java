@@ -42,6 +42,23 @@ public class Token implements IToken
         }
     }
 
+    @Override
+    public String getStringValue() {
+        if(kind == Kind.STRING_LIT)
+        {
+            String result = "";
+            for(char c: input.toCharArray())
+            {
+                if(c == '"')
+                {
+                    continue;
+                }
+                result.concat(Character.toString(c));
+            }
+        }
+        return result;
+    }
+    
     // Returns the float value if the kind is a float - TM
     @Override
     public float getFloatValue() {
