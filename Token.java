@@ -1,3 +1,5 @@
+import javax.xml.transform.Source;
+
 import edu.ufl.cise.plc.IToken;
 
 public class Token implements IToken
@@ -12,7 +14,14 @@ public class Token implements IToken
 
     // --------------- //
 
-    
+    public Token(Kind _kind, String _input, int _pos, int _length, SourceLocation _sourceLocation)
+    {
+        kind = _kind;
+        input = _input;
+        pos = _pos;
+        length = _length;
+        sourceLocation = _sourceLocation;
+    }
 
     // Returns the kind - TM
     @Override
@@ -80,6 +89,9 @@ public class Token implements IToken
         } else {
             throw new NumberFormatException();
         }
+    
     }
 
+    
+    
 }
