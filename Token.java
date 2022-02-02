@@ -8,6 +8,7 @@ public class Token implements IToken
     String input;
     int pos;
     int length;
+    SourceLocation sourceLocation;
 
     // --------------- //
 
@@ -21,6 +22,12 @@ public class Token implements IToken
     @Override
     public String getText() {
         return input;
+    }
+    
+    // Returns source location - TM
+    @Override
+    public SourceLocation getSourceLocation() {
+        return sourceLocation;
     }
 
     // Returns the Integer value of the token if the kind is an int - TM
