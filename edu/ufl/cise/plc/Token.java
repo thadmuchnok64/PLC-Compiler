@@ -14,7 +14,9 @@ public class Token implements IToken
 
     // --------------- //
 
-    public Token(IToken.Kind _kind, String _input, int _pos, int _length, int line, int column)
+    
+
+    public Token(Kind _kind, String _input, int _pos, int _length, int line, int column)
     {
         kind = _kind;
         input = _input;
