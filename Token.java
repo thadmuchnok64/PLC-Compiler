@@ -8,7 +8,7 @@ public class Token implements IToken
     String input;
     int pos;
     int length;
-    
+
     // --------------- //
 
     // Returns the kind - TM
@@ -38,6 +38,19 @@ public class Token implements IToken
     public float getFloatValue() {
         if(kind==Kind.FLOAT_LIT){
             return Float.parseFloat(getText());
+        } else {
+            throw new NumberFormatException();
+        }
+    }
+
+    @Override
+    public boolean getBooleanValue() {
+        if(kind==Kind.BOOLEAN_LIT){
+            if(getText().compareToIgnoreCase("true")){
+                return true;
+            }  else {
+                return false;
+            }
         } else {
             throw new NumberFormatException();
         }
