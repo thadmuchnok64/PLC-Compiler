@@ -30,14 +30,14 @@ public class Lexer implements ILexer {
         }
 
 
-        for(int i = 0; i < chars.length(); i++)
-            for(int j = 0; chars.get(i).length; j++){
+        for(int i = 0; i < chars.size(); i++)
+            for(int j = 0; j < chars.get(i).size(); j++){
 
             char ch = chars.get(i).get(j);
             int startPos;
             switch(state)
             {
-                case START:
+                case nSTART:
                     startPos = pos;
                     switch(ch)
                     {
@@ -47,8 +47,7 @@ public class Lexer implements ILexer {
                         
                         case '+':
                         {
-                            IToken.Kind k = IToken.Kind.PLUS;
-                            Token newToken = new Token(k, ch, pos, 1, i, j);
+                            Token newToken = new Token(Kind.PLUS, ch+"", pos, 1, i, j);
                             break;
                         }
                         
@@ -56,12 +55,12 @@ public class Lexer implements ILexer {
 
                         case '*':
                         {
-                            Token newToken = new Token(Kind.TIMES, ch, pos, 1, i, j);
+                            Token newToken = new Token(Kind.TIMES, ch+"", pos, 1, i, j);
                         }
                             
                         case '=':
                         {
-                            Token newToken = new Token(Kind.MINUS, ch, pos, 1, i, j);
+                            Token newToken = new Token(Kind.MINUS, ch+"", pos, 1, i, j);
                             break;
                         }
                             
@@ -83,7 +82,7 @@ public class Lexer implements ILexer {
                 break;
             }
         }
-        state = State.START;
+        state = State.nSTART;
         
     }
     
