@@ -88,7 +88,6 @@ public class LexerTests {
 				""";
 		show(input);
 		ILexer lexer = getLexer(input);
-		//lexer.next();
 		checkToken(lexer.next(), Kind.PLUS, 0,0);
 		checkToken(lexer.next(), Kind.MINUS, 1,0);
 		checkEOF(lexer.next());
@@ -99,14 +98,12 @@ public class LexerTests {
 	void testComment0() throws LexicalException {
 		//Note that the quotes around "This is a string" are passed to the lexer.  
 		String input = """
-				"This is a string"\n
-				#*
-				*
+				"This is a string"
+				#this is a comment
 				*
 				""";
 		show(input);
 		ILexer lexer = getLexer(input);
-	//	System.out.println(lexer.next().getStringValue());
 		checkToken(lexer.next(), Kind.STRING_LIT, 0,0);
 		checkToken(lexer.next(), Kind.TIMES, 2,0);
 		checkEOF(lexer.next());
