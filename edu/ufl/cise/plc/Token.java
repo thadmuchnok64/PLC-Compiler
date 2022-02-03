@@ -16,11 +16,11 @@ public class Token implements IToken
 
     
 
-    public Token(Kind _kind, String _input, int _pos, int _length, int line, int column)
+    public Token(Kind _kind, String _input, int _length, int line, int column)
     {
         kind = _kind;
         input = _input;
-        pos = _pos;
+        //pos = _pos;
         sourceLocation = new SourceLocation(line, column);
     }
 

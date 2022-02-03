@@ -6,14 +6,15 @@ import edu.ufl.cise.plc.IToken.Kind;
 
 public class Lexer implements ILexer {
     
+
+    private enum State {START, IN_IDENT, HAVE_ZERO, HAVE_DOT, IN_FLOAT, IN_NUM, HAVE_EQ, HAVE_MINUS,HAVE_PLUS};
     ArrayList<Token> tokens;
     ArrayList<ArrayList<Character>> chars;
     int row = 0;
     int column = 0;
     int currentIndex = 0;
 
-    String str = "";
-
+    String str;
 
 
 
@@ -21,6 +22,7 @@ public class Lexer implements ILexer {
 
     public IToken MakeToken(boolean increments){
         
+        str = "";
         State currentState = State.START;
         Token newToken;
         int posX = column;
@@ -28,8 +30,10 @@ public class Lexer implements ILexer {
         int posY = row;
         boolean endScan = false;
 
-        while (!endScan){
+        posX = posX -1;
 
+        while (!endScan){
+            posX++;
             char ch = chars.get(posX).get(posY);
             //int startPos;
              endScan = true;
@@ -94,6 +98,13 @@ public class Lexer implements ILexer {
                         str = str + ch;
                         endScan = false;
                     }
+                    case '+':
+                    if(currentState==State.START){
+                        currentState= State.HAVE_PLUS;
+                    } else if(currentState==State.HAVE_PLUS){
+                        str = str + ch;
+                        endScan = false;
+                    }
                     break;
                     case '\b','\t','\n','\f','\r','"','\'','\\',' ':
                         if(currentState==State.START){
@@ -114,14 +125,14 @@ public class Lexer implements ILexer {
                         throw new UnsupportedOperationException("oopsie poopsie, looks like you made an invalid term.");
                         //break;
 
-                   if(!endScan){
-                    posX++;
-                   }
+                   
+                    
+                   
                 }
         
     }
         
-        switch(state)
+        switch(currentState)
             {
                 case START:
                 /*
@@ -157,7 +168,7 @@ public class Lexer implements ILexer {
                 break;*/
                 case IN_IDENT:
                 {
-                    newToken = new Token(Kind.IDENT,str,pos,1,i,j);
+                    newToken = new Token(Kind.IDENT,str,str.length(),posY,startPos);
                     break;
                 }
                 case HAVE_ZERO:
@@ -165,14 +176,16 @@ public class Lexer implements ILexer {
                 case HAVE_DOT:
                 break;
                 case IN_FLOAT:
-                    newToken = new Token(Kind.FLOAT_LIT,str,pos,1,i,j);
+                    newToken = new Token(Kind.FLOAT_LIT,str,str.length(),posY,startPos);
                 break;
                 case IN_NUM:
                 {
-                    newToken = new Token(Kind.INT_LIT,str,pos,1,i,j);
+                    newToken = new Token(Kind.INT_LIT,str,str.length(),posY,startPos);
                 }
                 break;
                 case HAVE_EQ:
+                break;
+                case HAVE_PLUS:
                 break;
                 case HAVE_MINUS:
                 break;
@@ -219,7 +232,7 @@ public class Lexer implements ILexer {
         */
     }
     
-    private enum State {START, IN_IDENT, HAVE_ZERO, HAVE_DOT, IN_FLOAT, IN_NUM, HAVE_EQ, HAVE_MINUS};
+
     private State state;
     public Lexer(String input)
     {
