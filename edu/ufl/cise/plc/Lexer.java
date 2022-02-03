@@ -259,7 +259,11 @@ public class Lexer implements ILexer {
                     throw new UnsupportedOperationException("How the fuck did you get here?");
                 case IN_IDENT:
                 {
+                    if(theKindMap.containsKey(str)){
+                        newToken = new Token(theKindMap.get(str),str,str.length(),posY,startPos);
+                    } else {
                     newToken = new Token(Kind.IDENT,str,str.length(),posY,startPos);
+                    }
                     break;
                 }
                 case HAVE_ZERO:
@@ -275,8 +279,12 @@ public class Lexer implements ILexer {
                     newToken = new Token(Kind.INT_LIT,str,str.length(),posY,startPos);
                 }
                 break;
-                case HAVE_EQ:
-                newToken = new Token(Kind.INT_LIT,str,str.length(),posY,startPos);
+                case HAVE_BIZZARE:
+                if(theKindMap.containsKey(str)){
+                newToken = new Token(theKindMap.get(str),str,str.length(),posY,startPos);
+                } else {
+                    throw new UnsupportedOperationException("Uhhh looks like you made an invalid token, buckaroo");
+                }
                 break;
                 default:
                 throw new UnsupportedOperationException("wtf happened here?");
