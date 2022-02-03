@@ -28,7 +28,6 @@ public class Lexer implements ILexer {
         theKindMap.put("boolean", Kind.TYPE);
         theKindMap.put("color", Kind.TYPE);
         theKindMap.put("image", Kind.TYPE);
-        theKindMap.put("void", Kind.TYPE);
 
         //<image_op>
         theKindMap.put("getWidth", Kind.IMAGE_OP);
@@ -63,7 +62,36 @@ public class Lexer implements ILexer {
         theKindMap.put("else", Kind.KW_ELSE);
         theKindMap.put("fi", Kind.KW_IF);
         theKindMap.put("write", Kind.KW_WRITE);
-        theKindMap.put("console", Kind.KW_CONSOLE);   
+        theKindMap.put("console", Kind.KW_CONSOLE);
+        theKindMap.put("void", Kind.KW_VOID);
+
+        //weird characters
+        theKindMap.put("&", Kind.AND);
+        theKindMap.put("|", Kind.OR);
+        theKindMap.put(",", Kind.COMMA);
+        theKindMap.put(">=", Kind.GE);
+        theKindMap.put("<=", Kind.LE);
+        theKindMap.put("=", Kind.ASSIGN);
+        theKindMap.put("==", Kind.EQUALS);
+        theKindMap.put(">", Kind.GT);
+        theKindMap.put(";", Kind.SEMI);
+        theKindMap.put("->", Kind.RARROW);
+        theKindMap.put("<-", Kind.LARROW);
+        theKindMap.put("^", Kind.RETURN);
+        theKindMap.put("[", Kind.LSQUARE);
+        theKindMap.put("]", Kind.RSQUARE);
+        theKindMap.put("<<", Kind.LANGLE); 
+        theKindMap.put(">>", Kind.RANGLE);
+        theKindMap.put("+", Kind.PLUS);
+        theKindMap.put("-", Kind.MINUS);
+        theKindMap.put("*", Kind.TIMES);
+        theKindMap.put("%", Kind.MOD);
+        theKindMap.put("/", Kind.DIV);
+        theKindMap.put("(", Kind.LPAREN);
+        theKindMap.put(")", Kind.RPAREN);
+        theKindMap.put("!", Kind.BANG);
+        theKindMap.put("!=", Kind.NOT_EQUALS);
+
     }
     
 
@@ -299,6 +327,7 @@ public class Lexer implements ILexer {
     private State state;
     public Lexer(String input)
     {
+        generateReservedMap();
         /*
         char[] charArray = input.toCharArray();
         for(char c: charArray)
