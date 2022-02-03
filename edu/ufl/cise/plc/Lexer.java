@@ -1,6 +1,7 @@
 package edu.ufl.cise.plc;
 import java.lang.Thread.State;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import edu.ufl.cise.plc.IToken.Kind;
 
@@ -16,8 +17,55 @@ public class Lexer implements ILexer {
 
     String str;
 
+    HashMap<String, Kind> theKindMap = new HashMap<String, Kind>();
+    
+    public void generateReservedMap()
+    {
+        //<type>
+        theKindMap.put("string", Kind.TYPE);
+        theKindMap.put("int", Kind.TYPE);
+        theKindMap.put("float", Kind.TYPE);
+        theKindMap.put("boolean", Kind.TYPE);
+        theKindMap.put("color", Kind.TYPE);
+        theKindMap.put("image", Kind.TYPE);
+        theKindMap.put("void", Kind.TYPE);
 
+        //<image_op>
+        theKindMap.put("getWidth", Kind.IMAGE_OP);
+        theKindMap.put("getHeight", Kind.IMAGE_OP);
 
+        //<color_op>
+        theKindMap.put("getRed", Kind.COLOR_OP);
+        theKindMap.put("getGreen", Kind.COLOR_OP);
+        theKindMap.put("getBlue", Kind.COLOR_OP);
+
+        //<color_const>
+        theKindMap.put("BLACK", Kind.COLOR_CONST);
+        theKindMap.put("BLUE", Kind.COLOR_CONST);
+        theKindMap.put("CYAN", Kind.COLOR_CONST);
+        theKindMap.put("DARK_GRAY", Kind.COLOR_CONST);
+        theKindMap.put("GRAY", Kind.COLOR_CONST);
+        theKindMap.put("GREEN", Kind.COLOR_CONST);
+        theKindMap.put("LIGHT_GRAY", Kind.COLOR_CONST);
+        theKindMap.put("MAGENTA", Kind.COLOR_CONST);
+        theKindMap.put("ORANGE", Kind.COLOR_CONST);
+        theKindMap.put("PINK", Kind.COLOR_CONST);
+        theKindMap.put("RED", Kind.COLOR_CONST);
+        theKindMap.put("WHITE", Kind.COLOR_CONST);
+        theKindMap.put("YELLOW", Kind.COLOR_CONST);
+
+        //<boolean_lit>
+        theKindMap.put("true", Kind.BOOLEAN_LIT);
+        theKindMap.put("false", Kind.BOOLEAN_LIT);
+
+        //<other_keywords>
+        theKindMap.put("if", Kind.KW_IF);
+        theKindMap.put("else", Kind.KW_ELSE);
+        theKindMap.put("fi", Kind.KW_IF);
+        theKindMap.put("write", Kind.KW_WRITE);
+        theKindMap.put("console", Kind.KW_CONSOLE);   
+    }
+    
 
 
     public IToken MakeToken(boolean increments){
@@ -251,6 +299,7 @@ public class Lexer implements ILexer {
     private State state;
     public Lexer(String input)
     {
+        /*
         char[] charArray = input.toCharArray();
         for(char c: charArray)
         {
@@ -265,6 +314,7 @@ public class Lexer implements ILexer {
                     break;
             }
         }
+        */
 
     }
 }
