@@ -1,4 +1,5 @@
 package edu.ufl.cise.plc;
+import java.lang.Thread.State;
 import java.util.ArrayList;
 
 import edu.ufl.cise.plc.IToken.Kind;
@@ -7,59 +8,32 @@ public class Lexer implements ILexer {
     
     ArrayList<Token> tokens;
     ArrayList<ArrayList<Character>> chars;
-    int pos = 0;
-    int line = 0;
+    int row = 0;
+    int column = 0;
     int currentIndex = 0;
 
-    //Returns next object in array, and iterates the current index
-    @Override
-    public IToken next() throws LexicalException {
-        currentIndex++;
-        if(currentIndex>=tokens.size()){
-            currentIndex = 0;
-        }
-        return tokens.get(currentIndex);
-    }
+    String str = "";
 
-    //Returns the next token in the array.
-    @Override
-    public IToken peek() throws LexicalException {
-        if(currentIndex>=tokens.size()){
-            return tokens.get(0);
-        }
-        return tokens.get(currentIndex);
-    }
-    //test
-    private enum State {START, IN_IDENT, HAVE_ZERO, HAVE_DOT, IN_FLOAT, IN_NUM, HAVE_EQ, HAVE_MINUS};
-    private State state;
-    public Lexer(String input)
-    {
-        char[] charArray = input.toCharArray();
-        for(char c: charArray)
-        {
-            switch(c)
-            {
-                case ' ', '\t', '\n', '\r':
-                    line++;
-                    chars.get(line).add(c);
-                    break;
-                default:
-                    chars.get(line).add(c);
-                    break;
-            }
-        }
 
-        String str = "";
+
+
+
+
+    public IToken MakeToken(boolean increments){
+        
         State currentState = State.START;
+        Token newToken;
+        int posX = column;
+        int startPos = posX;
+        int posY = row;
+        boolean endScan = false;
 
-        for(int i = 0; i < chars.size(); i++)
-            for(int j = 0; j < chars.get(i).size(); j++){
+        while (!endScan){
 
-            char ch = chars.get(i).get(j);
-            int startPos;
-            Token newToken;
-            boolean endScan = true;
-            Kind prevState;
+            char ch = chars.get(posX).get(posY);
+            //int startPos;
+             endScan = true;
+            //Kind prevState;
 
             //test switch - TM
                 switch(ch){
@@ -77,7 +51,14 @@ public class Lexer implements ILexer {
                     case '0','1','2','3','4','5','6','7','8','9':
                         switch(currentState)
                         {
-                            case IN_IDENT,HAVE_DOT,IN_FLOAT:
+                            case IN_IDENT,IN_FLOAT:
+                            str = str + ch;
+                            endScan = false;
+                            break;
+                            case HAVE_DOT:
+                            currentState = State.IN_FLOAT;
+                            str = str + ch;
+                            endScan = false;
                             break;
                             default:
                             currentState=State.IN_NUM;
@@ -119,21 +100,32 @@ public class Lexer implements ILexer {
                             //Skip white space if nothing is scanned yet.
                             endScan = false;
                         }
+                        if(ch=='\n'){
+                            posY++;
+                            posX = 0;
+                        }
+                        if(ch==' '){
+                            if(!endScan){
+                                startPos++;
+                            }
+                        }
                     break;
                     default:
                         throw new UnsupportedOperationException("oopsie poopsie, looks like you made an invalid term.");
-                    
+                        //break;
+
+                   if(!endScan){
+                    posX++;
+                   }
                 }
-
-            // end of test
-
-
-
-            switch(state)
+        
+    }
+        
+        switch(state)
             {
                 case START:
-                    startPos = pos;
-                    switch(ch)
+                /*
+                    switch(str)
                     {
                         case ' ', '\t', '\n', '\r' :
                             {
@@ -144,7 +136,7 @@ public class Lexer implements ILexer {
                         
                         case '+':
                         {
-                            newToken = new Token(Kind.PLUS, ch+"", pos, 1, i, j);
+                            newToken = new Token(Kind.PLUS, str, pos, 1, i, j);
                             break;
                         }
                         
@@ -152,20 +144,20 @@ public class Lexer implements ILexer {
 
                         case '*':
                         {
-                            newToken = new Token(Kind.TIMES, ch+"", pos, 1, i, j);
+                            newToken = new Token(Kind.TIMES, str, pos, 1, i, j);
                         }
                             
                         case '=':
                         {
-                            newToken = new Token(Kind.MINUS, ch+"", pos, 1, i, j);
+                            newToken = new Token(Kind.MINUS, str, pos, 1, i, j);
                             break;
                         }
                             
                     }
-                break;
+                break;*/
                 case IN_IDENT:
                 {
-                    newToken = new Token(Kind.IDENT,ch+"",pos,1,i,j);
+                    newToken = new Token(Kind.IDENT,str,pos,1,i,j);
                     break;
                 }
                 case HAVE_ZERO:
@@ -173,10 +165,11 @@ public class Lexer implements ILexer {
                 case HAVE_DOT:
                 break;
                 case IN_FLOAT:
+                    newToken = new Token(Kind.FLOAT_LIT,str,pos,1,i,j);
                 break;
                 case IN_NUM:
                 {
-                    newToken = new Token(Kind.INT_LIT,ch+"",pos,1,i,j);
+                    newToken = new Token(Kind.INT_LIT,str,pos,1,i,j);
                 }
                 break;
                 case HAVE_EQ:
@@ -184,9 +177,66 @@ public class Lexer implements ILexer {
                 case HAVE_MINUS:
                 break;
             }
-        }
-        state = State.START;
+
+            if(increments){
+                column = posX;
+                row = posY;
+            }
+
+            return newToken;
+    }
+
+
+    //Returns next object in array, and iterates the current index
+    @Override
+    public IToken next() throws LexicalException {
         
+
+        
+        IToken token = MakeToken(true);
+        
+        return token;
+        /*
+        currentIndex++;
+        if(currentIndex>=tokens.size()){
+            currentIndex = 0;
+        }
+        return tokens.get(currentIndex);
+        */
+    }
+
+    //Returns the next token in the array.
+    @Override
+    public IToken peek() throws LexicalException {
+        IToken token = MakeToken(true);
+        
+        return token;
+        /*
+        if(currentIndex>=tokens.size()){
+            return tokens.get(0);
+        }
+        return tokens.get(currentIndex);
+        */
     }
     
+    private enum State {START, IN_IDENT, HAVE_ZERO, HAVE_DOT, IN_FLOAT, IN_NUM, HAVE_EQ, HAVE_MINUS};
+    private State state;
+    public Lexer(String input)
+    {
+        char[] charArray = input.toCharArray();
+        for(char c: charArray)
+        {
+            switch(c)
+            {
+                case ' ', '\t', '\n', '\r':
+                    line++;
+                    chars.get(line).add(c);
+                    break;
+                default:
+                    chars.get(line).add(c);
+                    break;
+            }
+        }
+
+    }
 }
