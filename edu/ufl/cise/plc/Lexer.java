@@ -16,11 +16,13 @@ public class Lexer implements ILexer {
         IN_FLOAT,
         IN_NUM,
         HAVE_EQ,
-        HAVE_MINUS,
-        HAVE_PLUS,
-        HAVE_MULTIPLY,
-        HAVE_DIVISION,
-        HAVE_BIZZARE
+        //HAVE_MINUS,
+        //HAVE_PLUS,
+        //HAVE_MULTIPLY,
+        //HAVE_DIVISION,
+        HAVE_BIZZARE,
+        HAVE_STRING,
+        HAVE_COMMENT,
 
     };
 
@@ -121,6 +123,8 @@ public class Lexer implements ILexer {
         int startPos = posX;
         int posY = row;
         boolean endScan = false;
+        boolean stringMode = false;
+        boolean commentMode = false;
 
         posX = posX -1;
 
@@ -130,8 +134,7 @@ public class Lexer implements ILexer {
             //int startPos;
              endScan = true;
             //Kind prevState;
-
-            //test switch - TM
+            if(!stringMode&&!commentMode){
                 switch(ch){
                     //Check for ident starter
                     case 'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','$','_':
@@ -226,19 +229,26 @@ public class Lexer implements ILexer {
                     }
                     break;
                     */
-                    case '\b','\t','\n','\f','\r','"','\'','\\',' ':
+                    case '\b','\t','\n','\f','\r','"','\'','\\',' ','#':
                         if(currentState==State.START){
                             //Skip white space if nothing is scanned yet.
                             endScan = false;
                         }
-                        if(ch=='\n'){
+                        else if(ch=='\n'){
                             posY++;
                             posX = 0;
                         }
-                        if(ch==' '){
+                        else if(ch==' '){
                             if(!endScan){
                                 startPos++;
                             }
+                        }
+                        else if(ch=='"'||ch=='\''){
+                            stringMode = true;
+                            str = str + ch;
+                        } else if(ch=='#'){
+                            commentMode = true;
+                            str = str + ch;
                         }
                     break;
                     default:
@@ -249,6 +259,21 @@ public class Lexer implements ILexer {
                     
                    
                 }
+            } else if (stringMode){
+                str = str + ch;
+                endScan = false;
+                if(ch=='"'||ch=='\''){
+                    stringMode = false;
+                    endScan = true;
+                }
+            } else if (commentMode){
+                str = str + ch;
+                endScan = false;
+                if(ch=='\n'){
+                    commentMode = false;
+                    endScan = true;
+                }
+            }
         
     }
         
