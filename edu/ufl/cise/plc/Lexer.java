@@ -59,6 +59,7 @@ public class Lexer implements ILexer {
             int startPos;
             Token newToken;
             boolean endScan = true;
+            Kind prevState;
 
             //test switch - TM
                 switch(ch){
