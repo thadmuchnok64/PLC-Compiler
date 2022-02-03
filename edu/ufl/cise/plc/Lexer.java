@@ -117,6 +117,12 @@ public class Lexer implements ILexer {
     public IToken MakeToken(boolean increments) throws LexicalException{
         
         str = "";
+
+        if(column<0){
+
+        column = 0;
+        }
+
         State currentState = State.START;
         Token newToken;
         int posX = column;
@@ -194,10 +200,10 @@ public class Lexer implements ILexer {
                         
                         if(ch=='\n'||ch=='\r'){
                             posY++;
-                            posX = 0;
+                            posX = -1;
                             if(currentState==State.START){
                                 startLine++;
-                                startPos = 0;
+                                startPos = -1;
                                 endScan = false;
                             }
                         }
@@ -208,8 +214,8 @@ public class Lexer implements ILexer {
                         } else if(ch=='#'){
                             if(currentState==State.START){
                                 posY++;
-                                posX = 0;
-                                startPos = 0;
+                                posX = -1;
+                                startPos = -1;
                                 startLine++;
                                 endScan = false;
                             }
@@ -228,7 +234,7 @@ public class Lexer implements ILexer {
                         
                         if(currentState==State.START&&posY<chars.size()-1){
                             posY++;
-                            posX = 0;
+                            posX = -1;
                             startLine++;
                             startPos++;
                             endScan=false;
