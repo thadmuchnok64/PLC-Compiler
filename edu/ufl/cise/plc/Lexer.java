@@ -7,7 +7,7 @@ import edu.ufl.cise.plc.IToken.Kind;
 public class Lexer implements ILexer {
     
 
-    private enum State {START, IN_IDENT, HAVE_ZERO, HAVE_DOT, IN_FLOAT, IN_NUM, HAVE_EQ, HAVE_MINUS,HAVE_PLUS};
+    private enum State {START, IN_IDENT, HAVE_ZERO, HAVE_DOT, IN_FLOAT, IN_NUM, HAVE_EQ, HAVE_MINUS,HAVE_PLUS,HAVE_MULTIPLY,HAVE_DIVISION};
     ArrayList<Token> tokens;
     ArrayList<ArrayList<Character>> chars;
     int row = 0;
@@ -102,6 +102,21 @@ public class Lexer implements ILexer {
                     if(currentState==State.START){
                         currentState= State.HAVE_PLUS;
                     } else if(currentState==State.HAVE_PLUS){
+                        str = str + ch;
+                        endScan = false;
+                    }
+                    break;
+                    case '*':
+                    if(currentState==State.START){
+                        currentState= State.HAVE_MULTIPLY;
+                    } else if(currentState==State.HAVE_MULTIPLY){
+                        str = str + ch;
+                        endScan = false;
+                    }
+                    case '/':
+                    if(currentState==State.START){
+                        currentState= State.HAVE_DIVISION;
+                    } else if(currentState==State.HAVE_DIVISION){
                         str = str + ch;
                         endScan = false;
                     }
