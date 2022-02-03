@@ -2,13 +2,28 @@ package edu.ufl.cise.plc;
 import java.lang.Thread.State;
 import java.util.ArrayList;
 import java.util.HashMap;
-
 import edu.ufl.cise.plc.IToken.Kind;
 
 public class Lexer implements ILexer {
     
 
-    private enum State {START, IN_IDENT, HAVE_ZERO, HAVE_DOT, IN_FLOAT, IN_NUM, HAVE_EQ, HAVE_MINUS,HAVE_PLUS,HAVE_MULTIPLY,HAVE_DIVISION};
+    private enum State {
+
+        START, 
+        IN_IDENT,
+        HAVE_ZERO,
+        HAVE_DOT, 
+        IN_FLOAT,
+        IN_NUM,
+        HAVE_EQ,
+        HAVE_MINUS,
+        HAVE_PLUS,
+        HAVE_MULTIPLY,
+        HAVE_DIVISION,
+        HAVE_BIZZARE
+
+    };
+
     ArrayList<Token> tokens;
     ArrayList<ArrayList<Character>> chars;
     int row = 0;
@@ -93,7 +108,8 @@ public class Lexer implements ILexer {
         theKindMap.put("!=", Kind.NOT_EQUALS);
 
     }
-    
+
+
 
 
     public IToken MakeToken(boolean increments){
@@ -140,12 +156,23 @@ public class Lexer implements ILexer {
                             str = str + ch;
                             endScan = false;
                             break;
+                            case HAVE_BIZZARE:
+                            //end scan
+                            break;
                             default:
                             currentState=State.IN_NUM;
                             str = str + ch;
                             endScan = false;
                             break;
                         }
+                    break;
+                    case '!', '<', '>', '&','|','(',')','[',']','=','-','/','*','+':
+                            //stuff
+                            if(currentState == State.START || currentState == State.HAVE_BIZZARE){
+                                endScan = false;
+                                str = str + ch;
+                                currentState = State.HAVE_BIZZARE;
+                            }
                     break;
                     case '.':
                     //check for Float
@@ -159,6 +186,7 @@ public class Lexer implements ILexer {
                         endScan = false;
                     }
                     break;
+                    /*
                     case '=':
                         if(currentState==State.START){
                             currentState= State.HAVE_EQ;
@@ -197,6 +225,7 @@ public class Lexer implements ILexer {
                         endScan = false;
                     }
                     break;
+                    */
                     case '\b','\t','\n','\f','\r','"','\'','\\',' ':
                         if(currentState==State.START){
                             //Skip white space if nothing is scanned yet.
@@ -226,46 +255,18 @@ public class Lexer implements ILexer {
         switch(currentState)
             {
                 case START:
-                /*
-                    switch(str)
-                    {
-                        case ' ', '\t', '\n', '\r' :
-                            {
-                                pos++;
-                                str = "";
-                            }
-                            break;
-                        
-                        case '+':
-                        {
-                            newToken = new Token(Kind.PLUS, str, pos, 1, i, j);
-                            break;
-                        }
-                        
-                        
-
-                        case '*':
-                        {
-                            newToken = new Token(Kind.TIMES, str, pos, 1, i, j);
-                        }
-                            
-                        case '=':
-                        {
-                            newToken = new Token(Kind.MINUS, str, pos, 1, i, j);
-                            break;
-                        }
-                            
-                    }
-                break;*/
+                    //should never be here
+                    throw new UnsupportedOperationException("How the fuck did you get here?");
                 case IN_IDENT:
                 {
                     newToken = new Token(Kind.IDENT,str,str.length(),posY,startPos);
                     break;
                 }
                 case HAVE_ZERO:
+                newToken = new Token(Kind.INT_LIT,str,str.length(),posY,startPos);
                 break;
                 case HAVE_DOT:
-                break;
+                    throw new UnsupportedOperationException("excuse me what in the name of ass did you just attempt to compile");
                 case IN_FLOAT:
                     newToken = new Token(Kind.FLOAT_LIT,str,str.length(),posY,startPos);
                 break;
@@ -275,11 +276,10 @@ public class Lexer implements ILexer {
                 }
                 break;
                 case HAVE_EQ:
+                newToken = new Token(Kind.INT_LIT,str,str.length(),posY,startPos);
                 break;
-                case HAVE_PLUS:
-                break;
-                case HAVE_MINUS:
-                break;
+                default:
+                throw new UnsupportedOperationException("wtf happened here?");
             }
 
             if(increments){
@@ -326,7 +326,7 @@ public class Lexer implements ILexer {
 
     private State state;
     public Lexer(String input)
-    {
+    { 
         generateReservedMap();
         /*
         char[] charArray = input.toCharArray();
