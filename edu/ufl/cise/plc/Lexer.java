@@ -29,7 +29,7 @@ public class Lexer implements ILexer {
         }
         return tokens.get(currentIndex);
     }
-
+    //test
     private enum State {START, IN_IDENT, HAVE_ZERO, HAVE_DOT, IN_FLOAT, IN_NUM, HAVE_EQ, HAVE_MINUS};
     private State state;
     public Lexer(String input)
