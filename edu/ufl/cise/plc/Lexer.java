@@ -137,6 +137,7 @@ public class Lexer implements ILexer {
 
         while (!endScan&&(posX+1)<chars.get(posY).size()){
             posX++;
+            boolean whitespace = false;
             char ch = chars.get(posY).get(posX);
             //int startPos;
              endScan = true;
@@ -223,16 +224,24 @@ public class Lexer implements ILexer {
                            // str = str + ch;
                         }
                         else if(currentState==State.START){
+                            whitespace = true;
+                            startPos++;
                             //Skip white space if nothing is scanned yet.
                             endScan = false;
                         }
                         else if(ch==' '){
+                            whitespace = true;
                             if(!endScan){
                                 startPos++;
                             }
+                        } else if(ch=='\t'){
+                            whitespace = true;
+                            if(currentState==State.START){
+                                endScan=false;
+                            }
                         }
                         
-                        if(currentState==State.START&&posY<chars.size()-1){
+                        if(currentState==State.START&&posY<chars.size()-1&&!whitespace){
                             posY++;
                             posX = -1;
                             startLine++;
@@ -290,7 +299,13 @@ public class Lexer implements ILexer {
                 break;
                 case IN_NUM:
                 {
+                    try{
+                        int x = Integer.parseInt(str);
                     newToken = new Token(Kind.INT_LIT,str,str.length(),startLine,startPos);
+                    } catch(Exception e){
+                        newToken = new Token(theKindMap.get(str),str,str.length(),startLine,startPos);
+                        throw new LexicalException("You piece of shit, you entered a number that is WAAAAAYYY TOO BIG. What are you even doing, kid?!");
+                    }
                 }
                 break;
                 case HAVE_STRING:
