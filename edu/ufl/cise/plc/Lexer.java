@@ -114,7 +114,7 @@ public class Lexer implements ILexer {
 
 
 
-    public IToken MakeToken(boolean increments){
+    public IToken MakeToken(boolean increments) throws LexicalException{
         
         str = "";
         State currentState = State.START;
@@ -122,19 +122,20 @@ public class Lexer implements ILexer {
         int posX = column;
         int startPos = posX;
         int posY = row;
+        int startLine = posY;
         boolean endScan = false;
-        boolean stringMode = false;
-        boolean commentMode = false;
+        //boolean stringMode = false;
+        //boolean commentMode = false;
 
         posX = posX -1;
 
-        while (!endScan){
+        while (!endScan&&(posX+1)<chars.get(posY).size()){
             posX++;
-            char ch = chars.get(posX).get(posY);
+            char ch = chars.get(posY).get(posX);
             //int startPos;
              endScan = true;
             //Kind prevState;
-            if(!stringMode&&!commentMode){
+            if(currentState!=State.HAVE_STRING){
                 switch(ch){
                     //Check for ident starter
                     case 'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','$','_':
@@ -189,130 +190,115 @@ public class Lexer implements ILexer {
                         endScan = false;
                     }
                     break;
-                    /*
-                    case '=':
-                        if(currentState==State.START){
-                            currentState= State.HAVE_EQ;
-                        } else if(currentState==State.HAVE_EQ){
-                            str = str + ch;
-                            endScan = false;
-                        }
-                    break;
-                    case '-':
-                    if(currentState==State.START){
-                        currentState= State.HAVE_MINUS;
-                    } else if(currentState==State.HAVE_MINUS){
-                        str = str + ch;
-                        endScan = false;
-                    }
-                    case '+':
-                    if(currentState==State.START){
-                        currentState= State.HAVE_PLUS;
-                    } else if(currentState==State.HAVE_PLUS){
-                        str = str + ch;
-                        endScan = false;
-                    }
-                    break;
-                    case '*':
-                    if(currentState==State.START){
-                        currentState= State.HAVE_MULTIPLY;
-                    } else if(currentState==State.HAVE_MULTIPLY){
-                        str = str + ch;
-                        endScan = false;
-                    }
-                    case '/':
-                    if(currentState==State.START){
-                        currentState= State.HAVE_DIVISION;
-                    } else if(currentState==State.HAVE_DIVISION){
-                        str = str + ch;
-                        endScan = false;
-                    }
-                    break;
-                    */
                     case '\b','\t','\n','\f','\r','"','\'','\\',' ','#':
-                        if(currentState==State.START){
-                            //Skip white space if nothing is scanned yet.
-                            endScan = false;
-                        }
-                        else if(ch=='\n'){
+                        
+                        if(ch=='\n'||ch=='\r'){
                             posY++;
                             posX = 0;
+                            if(currentState==State.START){
+                                startLine++;
+                                startPos = 0;
+                                endScan = false;
+                            }
+                        }
+                        else if((ch=='\"'||ch=='\'')&&currentState==State.START){
+                            currentState = State.HAVE_STRING;
+                            str = str + ch;
+                            endScan = false;
+                        } else if(ch=='#'){
+                            if(currentState==State.START){
+                                posY++;
+                                posX = 0;
+                                startPos = 0;
+                                startLine++;
+                                endScan = false;
+                            }
+                           // commentMode = true;
+                           // str = str + ch;
+                        }
+                        else if(currentState==State.START){
+                            //Skip white space if nothing is scanned yet.
+                            endScan = false;
                         }
                         else if(ch==' '){
                             if(!endScan){
                                 startPos++;
                             }
                         }
-                        else if(ch=='"'||ch=='\''){
-                            stringMode = true;
-                            str = str + ch;
-                        } else if(ch=='#'){
-                            commentMode = true;
-                            str = str + ch;
+                        
+                        if(currentState==State.START&&posY<chars.size()-1){
+                            posY++;
+                            posX = 0;
+                            startLine++;
+                            startPos++;
+                            endScan=false;
                         }
+
                     break;
                     default:
-                        throw new UnsupportedOperationException("oopsie poopsie, looks like you made an invalid term.");
+                        throw new LexicalException("oopsie poopsie, looks like you made an invalid term.");
                         //break;
 
                    
                     
                    
                 }
-            } else if (stringMode){
+            } else if (currentState==State.HAVE_STRING){
                 str = str + ch;
                 endScan = false;
-                if(ch=='"'||ch=='\''){
-                    stringMode = false;
+                if(ch=='\"'||ch=='\''){
+                    posX++;//hmm
                     endScan = true;
                 }
-            } else if (commentMode){
+            } else if (currentState==State.HAVE_COMMENT){
                 str = str + ch;
                 endScan = false;
                 if(ch=='\n'){
-                    commentMode = false;
                     endScan = true;
+                    posY++;
                 }
             }
-        
     }
-        
         switch(currentState)
             {
                 case START:
-                    //should never be here
-                    throw new UnsupportedOperationException("How the fuck did you get here?");
+                    //if it's still start, make an end of file token.
+                    newToken = new Token(Kind.EOF,str,str.length(),startLine,startPos);
+                    break;
                 case IN_IDENT:
                 {
                     if(theKindMap.containsKey(str)){
-                        newToken = new Token(theKindMap.get(str),str,str.length(),posY,startPos);
+                        newToken = new Token(theKindMap.get(str),str,str.length(),startLine,startPos);
                     } else {
-                    newToken = new Token(Kind.IDENT,str,str.length(),posY,startPos);
+                    newToken = new Token(Kind.IDENT,str,str.length(),startLine,startPos);
                     }
                     break;
                 }
                 case HAVE_ZERO:
-                newToken = new Token(Kind.INT_LIT,str,str.length(),posY,startPos);
+                newToken = new Token(Kind.INT_LIT,str,str.length(),startLine,startPos);
                 break;
                 case HAVE_DOT:
                     throw new UnsupportedOperationException("excuse me what in the name of ass did you just attempt to compile");
                 case IN_FLOAT:
-                    newToken = new Token(Kind.FLOAT_LIT,str,str.length(),posY,startPos);
+                    newToken = new Token(Kind.FLOAT_LIT,str,str.length(),startLine,startPos);
                 break;
                 case IN_NUM:
                 {
-                    newToken = new Token(Kind.INT_LIT,str,str.length(),posY,startPos);
+                    newToken = new Token(Kind.INT_LIT,str,str.length(),startLine,startPos);
                 }
+                break;
+                case HAVE_STRING:
+                    newToken = new Token(Kind.STRING_LIT,str,str.length(),startLine,startPos);
                 break;
                 case HAVE_BIZZARE:
                 if(theKindMap.containsKey(str)){
-                newToken = new Token(theKindMap.get(str),str,str.length(),posY,startPos);
+                newToken = new Token(theKindMap.get(str),str,str.length(),startLine,startPos);
                 } else {
                     throw new UnsupportedOperationException("Uhhh looks like you made an invalid token, buckaroo");
                 }
                 break;
                 default:
-                throw new UnsupportedOperationException("wtf happened here?");
+                throw new LexicalException("How the fuck did you get here?");
             }
 
             if(increments){
@@ -361,6 +347,21 @@ public class Lexer implements ILexer {
     public Lexer(String input)
     { 
         generateReservedMap();
+
+        chars = new ArrayList<ArrayList<Character>>();
+        chars.add(new ArrayList<Character>());
+        char[] c = input.toCharArray();
+
+
+        int line = 0;
+        for(int i = 0 ; i < c.length; i++){
+            chars.get(line).add(c[i]);
+            if(c[i]=='\n'){
+                line++;
+                chars.add(new ArrayList<Character>());
+            }
+        }
+
         /*
         char[] charArray = input.toCharArray();
         for(char c: charArray)
