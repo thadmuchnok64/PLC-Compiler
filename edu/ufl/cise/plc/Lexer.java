@@ -363,7 +363,7 @@ public class Lexer implements ILexer {
     //Returns the next token in the array.
     @Override
     public IToken peek() throws LexicalException {
-        IToken token = MakeToken(true);
+        IToken token = MakeToken(false);
         
         return token;
         /*

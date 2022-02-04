@@ -57,13 +57,15 @@ public class Token implements IToken
         if(kind == Kind.STRING_LIT)
         {
             String result = "";
+            int index = 0;
             for(char c: input.toCharArray())
             {
-                if(c == '"')
+                if(!(c == '"' && (index == 0 || index == input.toCharArray().length - 1 )))
                 {
-                    continue;
+                    result = result.concat(Character.toString(c));
                 }
-                result.concat(Character.toString(c));
+                index++;
+                
             }
             return result;
         } else{
