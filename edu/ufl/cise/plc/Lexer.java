@@ -227,7 +227,7 @@ public class Lexer implements ILexer {
                                 endScan = false;
                             }
                         }
-                        else if((ch=='\"'||ch=='\'')&&currentState==State.START){
+                        else if((ch=='\"')&&currentState==State.START){
                             currentState = State.HAVE_STRING;
                             str = str + ch;
                             endScan = false;
@@ -272,8 +272,9 @@ public class Lexer implements ILexer {
 
                     break;
                     default:
+                    if(currentState==State.START)
                         throw new LexicalException("oopsie poopsie, looks like you made an invalid term.");
-                        //break;
+                    break;
 
                    
                     
@@ -282,9 +283,13 @@ public class Lexer implements ILexer {
             } else if (currentState==State.HAVE_STRING){
                 str = str + ch;
                 endScan = false;
-                if(ch=='\"'||ch=='\''){
+                if(ch=='\"'){
                     posX++;//hmm
                     endScan = true;
+                }
+                if(!endScan&&posX==chars.get(posY).size()-1){
+                    posY++;
+                    posX=-1;
                 }
             } else if (currentState==State.HAVE_COMMENT){
                 str = str + ch;
