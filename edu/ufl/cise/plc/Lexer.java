@@ -184,8 +184,18 @@ public class Lexer implements ILexer {
                                 endScan = false;
                                 str = str + ch;
                                 currentState = State.HAVE_BIZZARE;
+                                if(!theKindMap.containsKey(str + chars.get(posY).get(posX+1)))
+                                {
+                                    if(chars.get(posY).get(posX+1)=='\n'||chars.get(posY).get(posX+1)=='\r'){
+                                        posY++;
+                                        posX = -1;
+                                        
+                                    }
+                                    endScan = true;
+                                    posX++;
+                                }
                             }
-                    break;
+                    break; 
                     case '.':
                     //check for Float
                     if(currentState == State.HAVE_ZERO||currentState==State.IN_NUM){
