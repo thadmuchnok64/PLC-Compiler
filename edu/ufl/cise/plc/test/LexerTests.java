@@ -229,6 +229,7 @@ void testIntFloatError() throws LexicalException {
 	checkInt(lexer.next(), 0, 			1, 0);
 	checkFloat(lexer.next(), (float) 0.15,	1, 1);
 	checkFloat(lexer.next(), (float) 10.030,	2, 0);
+	//.next();
 	assertThrows(LexicalException.class, () -> {
 		@SuppressWarnings("unused")
 		IToken token = lexer.next();

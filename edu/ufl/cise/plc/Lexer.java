@@ -171,8 +171,15 @@ public class Lexer implements ILexer {
                             case HAVE_BIZZARE:
                             //end scan
                             break;
+                            case HAVE_ZERO:
+                            //end scan
+                            break;
                             default:
+                            if(ch=='0'&&currentState!=State.IN_NUM&&currentState!=State.IN_FLOAT&&currentState!=State.HAVE_DOT){
+                                currentState = State.HAVE_ZERO;
+                            } else{
                             currentState=State.IN_NUM;
+                            }
                             str = str + ch;
                             endScan = false;
                             break;
@@ -203,9 +210,10 @@ public class Lexer implements ILexer {
                         str = str + ch;
                         endScan = false;
                     } else if(currentState==State.START) {
-                        currentState = State.HAVE_ZERO;
-                        str = str + ch;
-                        endScan = false;
+                       // currentState = State.HAVE_ZERO;
+                        //str = str + ch;
+                       // endScan = false;
+                       throw new LexicalException("Uhhhh looks like you put a decimal statement without a zero. I guess that's not supposed to work in this programming language for some reason???");
                     }
                     break;
                     case '\b','\t','\n','\f','\r','"','\'','\\',' ','#':
@@ -225,11 +233,13 @@ public class Lexer implements ILexer {
                             endScan = false;
                         } else if(ch=='#'){
                             if(currentState==State.START){
+                                if(chars.size()-1>posY){
                                 posY++;
+                                endScan = false;
+                                startLine++;
+                                }
                                 posX = -1;
                                 startPos = -1;
-                                startLine++;
-                                endScan = false;
                             }
                            // commentMode = true;
                            // str = str + ch;
