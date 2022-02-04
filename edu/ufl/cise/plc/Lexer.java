@@ -77,7 +77,7 @@ public class Lexer implements ILexer {
         //<other_keywords>
         theKindMap.put("if", Kind.KW_IF);
         theKindMap.put("else", Kind.KW_ELSE);
-        theKindMap.put("fi", Kind.KW_IF);
+        theKindMap.put("fi", Kind.KW_FI);
         theKindMap.put("write", Kind.KW_WRITE);
         theKindMap.put("console", Kind.KW_CONSOLE);
         theKindMap.put("void", Kind.KW_VOID);
@@ -183,8 +183,18 @@ public class Lexer implements ILexer {
                                 endScan = false;
                                 str = str + ch;
                                 currentState = State.HAVE_BIZZARE;
+                                if(!theKindMap.containsKey(str + chars.get(posY).get(posX+1)))
+                                {
+                                    if(chars.get(posY).get(posX+1)=='\n'||chars.get(posY).get(posX+1)=='\r'){
+                                        posY++;
+                                        posX = -1;
+                                        
+                                    }
+                                    endScan = true;
+                                    posX++;
+                                }
                             }
-                    break;
+                    break; 
                     case '.':
                     //check for Float
                     if(currentState == State.HAVE_ZERO||currentState==State.IN_NUM){
