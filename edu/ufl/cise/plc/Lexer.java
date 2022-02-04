@@ -77,7 +77,7 @@ public class Lexer implements ILexer {
         //<other_keywords>
         theKindMap.put("if", Kind.KW_IF);
         theKindMap.put("else", Kind.KW_ELSE);
-        theKindMap.put("fi", Kind.KW_IF);
+        theKindMap.put("fi", Kind.KW_FI);
         theKindMap.put("write", Kind.KW_WRITE);
         theKindMap.put("console", Kind.KW_CONSOLE);
         theKindMap.put("void", Kind.KW_VOID);
@@ -91,6 +91,7 @@ public class Lexer implements ILexer {
         theKindMap.put("=", Kind.ASSIGN);
         theKindMap.put("==", Kind.EQUALS);
         theKindMap.put(">", Kind.GT);
+        theKindMap.put("<", Kind.LT);
         theKindMap.put(";", Kind.SEMI);
         theKindMap.put("->", Kind.RARROW);
         theKindMap.put("<-", Kind.LARROW);
@@ -177,7 +178,7 @@ public class Lexer implements ILexer {
                             break;
                         }
                     break;
-                    case '!', '<', '>', '&','|','(',')','[',']','=','-','/','*','+':
+                    case '!', '<', '>', '&','|','(',')','[',']','=','-','/','*','+','%','^',',',';':
                             //stuff
                             if(currentState == State.START || currentState == State.HAVE_BIZZARE){
                                 endScan = false;
