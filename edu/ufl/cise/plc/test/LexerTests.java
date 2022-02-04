@@ -193,6 +193,9 @@ public class LexerTests {
 
 
 	// Extra test cases
+	// Not sure how accurate some of these are?
+	// They seem to be assuming a lot, 
+	// and theres a bit of ambiguity with what the compiler is exactly supposed to do - TM
 
 
 
@@ -492,9 +495,9 @@ void testError1() throws LexicalException {
 	//these checks should succeed
 	checkIdent(lexer.next(), "abc");
 	//lexer.next();
-	//checkInt(lexer.next(), 0, 1,0);
-	//checkToken(lexer.peek(), Kind.FLOAT_LIT, 1, 1);
-	checkToken(lexer.next(), Kind.FLOAT_LIT, 1, 0);
+	checkInt(lexer.next(), 0, 1,0);
+	checkToken(lexer.peek(), Kind.FLOAT_LIT, 1, 1);
+	checkToken(lexer.next(), Kind.FLOAT_LIT, 1, 1);
 	checkToken(lexer.next(), Kind.INT_LIT, 2,0);
 	checkIdent(lexer.next(), "_Name1", 3, 0);
 	checkIdent(lexer.next(), "_1", 4, 0);
