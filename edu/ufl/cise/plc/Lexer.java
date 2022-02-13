@@ -360,33 +360,19 @@ public class Lexer implements ILexer {
     //Returns next object in array, and iterates the current index
     @Override
     public IToken next() throws LexicalException {
-        
 
-        
         IToken token = MakeToken(true);
-        
         return token;
-        /*
-        currentIndex++;
-        if(currentIndex>=tokens.size()){
-            currentIndex = 0;
-        }
-        return tokens.get(currentIndex);
-        */
+
     }
 
     //Returns the next token in the array.
     @Override
     public IToken peek() throws LexicalException {
+       
         IToken token = MakeToken(false);
-        
         return token;
-        /*
-        if(currentIndex>=tokens.size()){
-            return tokens.get(0);
-        }
-        return tokens.get(currentIndex);
-        */
+
     }
     
 
@@ -408,23 +394,5 @@ public class Lexer implements ILexer {
                 chars.add(new ArrayList<Character>());
             }
         }
-
-        /*
-        char[] charArray = input.toCharArray();
-        for(char c: charArray)
-        {
-            switch(c)
-            {
-                case ' ', '\t', '\n', '\r':
-                    line++;
-                    chars.get(line).add(c);
-                    break;
-                default:
-                    chars.get(line).add(c);
-                    break;
-            }
-        }
-        */
-
     }
 }
