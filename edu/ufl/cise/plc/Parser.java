@@ -5,9 +5,11 @@ import java.util.ArrayList;
 import edu.ufl.cise.plc.IToken.Kind;
 import edu.ufl.cise.plc.ast.ASTNode;
 import edu.ufl.cise.plc.ast.BooleanLitExpr;
+import edu.ufl.cise.plc.ast.Expr;
 import edu.ufl.cise.plc.ast.FloatLitExpr;
 import edu.ufl.cise.plc.ast.IdentExpr;
 import edu.ufl.cise.plc.ast.StringLitExpr;
+import edu.ufl.cise.plc.ast.UnaryExpr;
 import edu.ufl.cise.plc.CompilerComponentFactory;
 
 public class Parser implements IParser {
@@ -31,30 +33,34 @@ public class Parser implements IParser {
 
 
 
-    }//stuff
+    }
 
-    public ASTNode recursionParse(ArrayList<IToken> list){
+    public ASTNode recursionParse(ArrayList<IToken> list) throws LexicalException{
         ASTNode a = null;
 
-        for(IToken t : listOfTokens){
+        //for(int i = 0; i < listOfTokens.size(); i++){
+            IToken t = listOfTokens.get(0);
             switch(t.getKind())
             {
                 case BOOLEAN_LIT:
-                    a = new BooleanLitExpr(t);
-                    break;
+                    return new BooleanLitExpr(t);
                 case STRING_LIT:
-                    a = new StringLitExpr(t);
-                    break;
+                    return new StringLitExpr(t);
                 case FLOAT_LIT:
-                    a = new FloatLitExpr(t);
-                    break;
+                    return new FloatLitExpr(t);
                 case IDENT:
-                    a = new IdentExpr(t);
-                    break;
+                    return new IdentExpr(t);
+                case BANG,MINUS,COLOR_OP, IMAGE_OP:
+                    list.remove(0);
+                    ASTNode newNode = (Expr)recursionParse(list);
+                    if(newNode instanceof Expr)
+                    return new UnaryExpr(t, t, (Expr)recursionParse(list));
+                    else 
+                    throw new LexicalException("penisbutt");
                 default:
                 //ligma
             }
-        }
+        //}
 
         return a;
     }
