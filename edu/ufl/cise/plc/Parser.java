@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import edu.ufl.cise.plc.IToken.Kind;
 import edu.ufl.cise.plc.ast.ASTNode;
+import edu.ufl.cise.plc.ast.BinaryExpr;
 import edu.ufl.cise.plc.ast.BooleanLitExpr;
 import edu.ufl.cise.plc.ast.Expr;
 import edu.ufl.cise.plc.ast.FloatLitExpr;
@@ -41,18 +42,24 @@ public class Parser implements IParser {
 
         //for(int i = 0; i < listOfTokens.size(); i++){
             IToken t = listOfTokens.get(0);
+
             switch(t.getKind())
             {
                 case BOOLEAN_LIT:
-                    return new BooleanLitExpr(t);
+                    a = new BooleanLitExpr(t);
+                    break;
                 case STRING_LIT:
-                    return new StringLitExpr(t);
+                    a = new StringLitExpr(t);
+                    break;
                 case FLOAT_LIT:
-                    return new FloatLitExpr(t);
+                    a = new FloatLitExpr(t);
+                    break;
                 case IDENT:
-                    return new IdentExpr(t);
+                    a = new IdentExpr(t);
+                    break;
                 case INT_LIT:
-                    return new IntLitExpr(t);
+                    a = new IntLitExpr(t);
+                    break;
                 case BANG,MINUS,COLOR_OP, IMAGE_OP:
                     list.remove(0);
                     ASTNode newNode = (Expr)recursionParse(list);
@@ -62,7 +69,26 @@ public class Parser implements IParser {
                     throw new LexicalException("penisbutt");
                 default:
                 //ligma
+                break;
             }
+                if(list.size()>1){
+                    switch(list.get(1).getKind()){
+                        case PLUS, MINUS:
+                        if(list.size()>2){
+                            IToken op = list.get(1);
+                            IToken first = list.get(0);
+                            list.remove(0);
+                            list.remove(0);
+                            ASTNode b = recursionParse(list);
+                            if(b instanceof Expr)
+                            return new BinaryExpr(first,(Expr)a,op,(Expr)b);
+                        } else{
+                            throw new LexicalException("Oopsie you made a stinky. Clean it up, you bastard");
+                        }
+                        break;
+                    }
+                }
+            
         //}
 
         return a;
