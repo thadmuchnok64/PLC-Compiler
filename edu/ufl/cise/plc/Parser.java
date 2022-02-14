@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import edu.ufl.cise.plc.IToken.Kind;
 import edu.ufl.cise.plc.ast.ASTNode;
 import edu.ufl.cise.plc.ast.BooleanLitExpr;
+import edu.ufl.cise.plc.ast.FloatLitExpr;
+import edu.ufl.cise.plc.ast.StringLitExpr;
 import edu.ufl.cise.plc.CompilerComponentFactory;
 
 public class Parser implements IParser {
@@ -32,12 +34,23 @@ public class Parser implements IParser {
 
     @Override
     public ASTNode parse() throws PLCException {
-
         ASTNode a = null;
 
         for(IToken t : listOfTokens){
-            if(t.getKind()==Kind.BOOLEAN_LIT){
-                a = new BooleanLitExpr(t);
+            switch(t.getKind())
+            {
+                case BOOLEAN_LIT:
+                    a = new BooleanLitExpr(t);
+                    break;
+                case STRING_LIT:
+                    a = new StringLitExpr(t);
+                    break;
+                case FLOAT_LIT:
+                    a = new FloatLitExpr(t);
+                    break;
+                
+                default:
+                //ligma
             }
         }
 
