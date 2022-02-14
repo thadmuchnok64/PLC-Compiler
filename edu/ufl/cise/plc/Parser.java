@@ -6,6 +6,7 @@ import edu.ufl.cise.plc.IToken.Kind;
 import edu.ufl.cise.plc.ast.ASTNode;
 import edu.ufl.cise.plc.ast.BooleanLitExpr;
 import edu.ufl.cise.plc.ast.FloatLitExpr;
+import edu.ufl.cise.plc.ast.IdentExpr;
 import edu.ufl.cise.plc.ast.StringLitExpr;
 import edu.ufl.cise.plc.CompilerComponentFactory;
 
@@ -48,7 +49,9 @@ public class Parser implements IParser {
                 case FLOAT_LIT:
                     a = new FloatLitExpr(t);
                     break;
-                
+                case IDENT:
+                    a = new IdentExpr(t);
+                    break;
                 default:
                 //ligma
             }
