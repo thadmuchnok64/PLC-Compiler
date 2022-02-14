@@ -8,6 +8,7 @@ import edu.ufl.cise.plc.ast.BooleanLitExpr;
 import edu.ufl.cise.plc.ast.Expr;
 import edu.ufl.cise.plc.ast.FloatLitExpr;
 import edu.ufl.cise.plc.ast.IdentExpr;
+import edu.ufl.cise.plc.ast.IntLitExpr;
 import edu.ufl.cise.plc.ast.StringLitExpr;
 import edu.ufl.cise.plc.ast.UnaryExpr;
 import edu.ufl.cise.plc.CompilerComponentFactory;
@@ -50,6 +51,8 @@ public class Parser implements IParser {
                     return new FloatLitExpr(t);
                 case IDENT:
                     return new IdentExpr(t);
+                case INT_LIT:
+                    return new IntLitExpr(t);
                 case BANG,MINUS,COLOR_OP, IMAGE_OP:
                     list.remove(0);
                     ASTNode newNode = (Expr)recursionParse(list);
