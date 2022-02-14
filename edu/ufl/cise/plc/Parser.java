@@ -33,8 +33,7 @@ public class Parser implements IParser {
 
     }
 
-    @Override
-    public ASTNode parse() throws PLCException {
+    public ASTNode recursionParse(ArrayList<IToken> list){
         ASTNode a = null;
 
         for(IToken t : listOfTokens){
@@ -58,6 +57,12 @@ public class Parser implements IParser {
         }
 
         return a;
+    }
+    
+
+    @Override
+    public ASTNode parse() throws PLCException {
+       return recursionParse(listOfTokens);
     }
 
 
