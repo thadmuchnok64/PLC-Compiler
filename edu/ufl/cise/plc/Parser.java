@@ -6,6 +6,7 @@ import edu.ufl.cise.plc.IToken.Kind;
 import edu.ufl.cise.plc.ast.ASTNode;
 import edu.ufl.cise.plc.ast.BinaryExpr;
 import edu.ufl.cise.plc.ast.BooleanLitExpr;
+import edu.ufl.cise.plc.ast.ConditionalExpr;
 import edu.ufl.cise.plc.ast.Expr;
 import edu.ufl.cise.plc.ast.FloatLitExpr;
 import edu.ufl.cise.plc.ast.IdentExpr;
@@ -41,7 +42,7 @@ public class Parser implements IParser {
         ASTNode a = null;
 
         //for(int i = 0; i < listOfTokens.size(); i++){
-            IToken t = listOfTokens.get(0);
+            IToken t = list.get(0);
 
             switch(t.getKind())
             {
@@ -60,6 +61,55 @@ public class Parser implements IParser {
                 case INT_LIT:
                     a = new IntLitExpr(t);
                     break;
+                case KW_IF:
+                //IToken firstToken;
+                Expr condition;
+                Expr trueCase;
+                Expr falseCase;
+                    try {
+                        int i = 1;
+                        if(list.get(i).getKind()==Kind.LPAREN){
+                            i++;
+                            ArrayList<IToken> newList = new ArrayList<>();
+                            while(list.get(i).getKind()!=Kind.RPAREN){
+                                newList.add(list.get(i));
+                                i++;
+                            }
+                            i++;
+                            condition = (Expr)recursionParse(newList);
+                            newList.clear();
+                            int ifCount = 0;
+                            while((list.get(i).getKind()!=Kind.KW_ELSE&&list.get(i).getKind()!=Kind.KW_FI)||ifCount>0){
+                                if(list.get(i).getKind()==Kind.KW_IF){
+                                    ifCount++;
+                                } else if(list.get(i).getKind()==Kind.KW_FI){
+                                    ifCount--;
+                                }
+                                newList.add(list.get(i));
+                                i++;
+                            }
+                            trueCase = (Expr)recursionParse(newList);
+                            newList.clear();
+                           // if(list.get(i).getKind()==Kind.KW_ELSE){
+                                i++;
+                            while(list.get(i).getKind()!=Kind.KW_FI){
+                                newList.add(list.get(i));
+                                i++;
+                            }
+                            falseCase = (Expr)recursionParse(newList);
+
+                        //}
+
+                        } else{
+                            throw new Exception();
+                        }
+                    } catch (Exception e) {
+                        //TODO: handle exception
+                        throw new LexicalException("your if-statement is missing something, you sentient bag of burger meat");
+                    }
+                    a= new ConditionalExpr(t, condition, trueCase, falseCase);
+
+                break;
                 case BANG,MINUS,COLOR_OP, IMAGE_OP:
                     list.remove(0);
                     ASTNode newNode = (Expr)recursionParse(list);
@@ -73,7 +123,7 @@ public class Parser implements IParser {
             }
                 if(list.size()>1){
                     switch(list.get(1).getKind()){
-                        case PLUS, MINUS:
+                        case PLUS, MINUS,AND,OR:
                         if(list.size()>2){
                             IToken op = list.get(1);
                             IToken first = list.get(0);
