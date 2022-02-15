@@ -104,7 +104,6 @@ public class Parser implements IParser {
                             throw new Exception();
                         }
                     } catch (Exception e) {
-                        //TODO: handle exception
                         throw new LexicalException("your if-statement is missing something, you sentient bag of burger meat");
                     }
                     a= new ConditionalExpr(t, condition, trueCase, falseCase);
@@ -116,7 +115,7 @@ public class Parser implements IParser {
                     if(newNode instanceof Expr)
                     return new UnaryExpr(t, t, (Expr)recursionParse(list));
                     else 
-                    throw new LexicalException("penisbutt");
+                    throw new LexicalException("You pile of catshit. Look at what you did to the code");
                 default:
                 //ligma
                 break;
