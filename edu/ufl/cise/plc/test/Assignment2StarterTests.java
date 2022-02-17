@@ -6,6 +6,13 @@ import static edu.ufl.cise.plc.IToken.Kind.COLOR_OP;
 import static edu.ufl.cise.plc.IToken.Kind.MINUS;
 import static edu.ufl.cise.plc.IToken.Kind.PLUS;
 import static edu.ufl.cise.plc.IToken.Kind.TIMES;
+import static edu.ufl.cise.plc.IToken.Kind.EQUALS;
+import static edu.ufl.cise.plc.IToken.Kind.OR;
+import static edu.ufl.cise.plc.IToken.Kind.GE;
+import static edu.ufl.cise.plc.IToken.Kind.MOD;
+import static edu.ufl.cise.plc.IToken.Kind.DIV;
+
+
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -423,6 +430,106 @@ public void testPixelError(TestInfo testinfo) throws Exception{
   show(e);
 }
 
+@DisplayName("testAllOperators")
+@Test
+public void testAllOperators(TestInfo testInfo) throws Exception {
+	String input = """
+			(false | 2 + 25 * 4/3 - 8 % a >= 0) == true
+			""";
+	show("-------------");
+	show(input);
+	Expr ast = (Expr) getAST(input);
+	show(ast);
+	assertThat("", ast, instanceOf(BinaryExpr.class));
+	assertEquals(EQUALS, ((BinaryExpr) ast).getOp().getKind());
+	
+	Expr paren = ((BinaryExpr) ast).getLeft();
+	assertThat("", paren, instanceOf(BinaryExpr.class));
+	assertEquals(OR, ((BinaryExpr) paren).getOp().getKind());
+	
+	Expr _false = ((BinaryExpr) paren).getLeft();
+	assertThat("", _false, instanceOf(BooleanLitExpr.class));
+	assertEquals(false, ((BooleanLitExpr) _false).getValue());
+	
+	Expr ge = ((BinaryExpr) paren).getRight();
+	assertThat("", ge, instanceOf(BinaryExpr.class));
+	assertEquals(GE, ((BinaryExpr) ge).getOp().getKind());
+	
+	Expr minus = ((BinaryExpr) ge).getLeft();
+	assertThat("", minus, instanceOf(BinaryExpr.class));
+	assertEquals(MINUS, ((BinaryExpr) minus).getOp().getKind());
+	
+	Expr add = ((BinaryExpr) minus).getLeft();
+	assertThat("", add, instanceOf(BinaryExpr.class));
+	assertEquals(PLUS, ((BinaryExpr) add).getOp().getKind());
+	
+	Expr two = ((BinaryExpr) add).getLeft();
+	assertThat("", two, instanceOf(IntLitExpr.class));
+	assertEquals(2, ((IntLitExpr) two).getValue());
+	
+	Expr div = ((BinaryExpr) add).getRight();
+	assertThat("", div, instanceOf(BinaryExpr.class));
+	assertEquals(DIV, ((BinaryExpr) div).getOp().getKind());
+	
+	Expr times = ((BinaryExpr) div).getLeft();
+	assertThat("", times, instanceOf(BinaryExpr.class));
+	assertEquals(TIMES, ((BinaryExpr) times).getOp().getKind());
+	
+	Expr twentyFive = ((BinaryExpr) times).getLeft();
+	assertThat("", twentyFive, instanceOf(IntLitExpr.class));
+	assertEquals(25, ((IntLitExpr) twentyFive).getValue());
+	
+	Expr four = ((BinaryExpr) times).getRight();
+	assertThat("", four, instanceOf(IntLitExpr.class));
+	assertEquals(4, ((IntLitExpr) four).getValue());
+	
+	Expr three = ((BinaryExpr) div).getRight();
+	assertThat("", three, instanceOf(IntLitExpr.class));
+	assertEquals(3, ((IntLitExpr) three).getValue());
+	
+	Expr mod = ((BinaryExpr) minus).getRight();
+	assertThat("", mod, instanceOf(BinaryExpr.class));
+	assertEquals(MOD, ((BinaryExpr) mod).getOp().getKind());
+	
+	Expr eight = ((BinaryExpr) mod).getLeft();
+	assertThat("", eight, instanceOf(IntLitExpr.class));
+	assertEquals(8, ((IntLitExpr) eight).getValue());
+	
+	Expr un = ((BinaryExpr) mod).getRight();
+	assertThat("", un, instanceOf(UnaryExprPostfix.class));
+	
+	Expr a = ((UnaryExprPostfix) un).getExpr();
+	assertThat("", a, instanceOf(IdentExpr.class));
+	assertEquals("a", a.getText());
+	
+	//remeber to change a back to a[(36+b),1]
+	PixelSelector sel = ((UnaryExprPostfix) un).getSelector();
+	assertThat("", sel, instanceOf(PixelSelector.class));
+	
+	Expr expr = ((PixelSelector) sel).getX();
+	assertThat("", expr, instanceOf(BinaryExpr.class));
+	assertEquals(PLUS, ((BinaryExpr) expr).getOp().getKind());
+	
+	Expr thirtySix = ((BinaryExpr) expr).getLeft();
+	assertThat("", thirtySix, instanceOf(IntLitExpr.class));
+	assertEquals(36, ((IntLitExpr) thirtySix).getValue());
+	
+	Expr b = ((BinaryExpr) expr).getRight();
+	assertThat("", b, instanceOf(IdentExpr.class));
+	assertEquals("b", b.getText());
+	
+	Expr one = ((PixelSelector) sel).getY();
+	assertThat("", one, instanceOf(IntLitExpr.class));
+	assertEquals(1, ((IntLitExpr) one).getValue());
+	
+	Expr zero = ((BinaryExpr) ge).getRight();
+	assertThat("", zero, instanceOf(IntLitExpr.class));
+	assertEquals(0, ((IntLitExpr) zero).getValue());
+	
+	Expr _true = ((BinaryExpr) ast).getRight();
+	assertThat("", _true, instanceOf(BooleanLitExpr.class));
+	assertEquals(true, ((BooleanLitExpr) _true).getValue());
+}
 
 
 }

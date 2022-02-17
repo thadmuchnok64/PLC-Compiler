@@ -23,19 +23,14 @@ public class Parser implements IParser {
     String input;
     ArrayList<IToken> listOfTokens;
 
-    public Parser(String _input){
+    public Parser(String _input) throws LexicalException{
 
         input = _input;
         ILexer lexer = CompilerComponentFactory.getLexer(input);
         listOfTokens = new ArrayList<>();
-            try {
                 while(lexer.peek().getKind()!=Kind.EOF){
                     listOfTokens.add(lexer.next());
                 }
-            } catch (LexicalException e) {
-                // idk why this needed a try and catch
-                e.printStackTrace();
-            }
 
 
 
@@ -43,7 +38,7 @@ public class Parser implements IParser {
 
     public ASTNode recursionParse(ArrayList<IToken> list) throws PLCException{
         ASTNode a = null;
-
+        int parenShift = 0;
         //for(int i = 0; i < listOfTokens.size(); i++){
             IToken t = list.get(0);
 
@@ -128,29 +123,57 @@ public class Parser implements IParser {
                     return new UnaryExpr(t, t, (Expr)recursionParse(list));
                    // else 
                     //throw new LexicalException("You pile of catshit. Look at what you did to the code");
-                default:
+                case LPAREN:
+                ArrayList<IToken> newList = new ArrayList<>();
+                int i = 1;
+                int parenCount = 0;
+                            while(list.get(i).getKind()!=Kind.RPAREN||parenCount>0){
+                                if(list.get(i).getKind()==Kind.LPAREN){
+                                    parenCount++;
+                                } else if (list.get(i).getKind()==Kind.RPAREN){
+                                    parenCount--;
+                                }
+
+                                newList.add(list.get(i));
+                                i++;
+                            }
+                            parenShift = i;
+                            a=recursionParse(newList);
+                break;
+                    default:
                 //ligma
                 break;
             }
-                if(list.size()>1){
-                    switch(list.get(1).getKind()){
-                        case PLUS, MINUS,AND,OR:
-                        if(list.size()>2){
-                            if(list.get(2).getKind() == Kind.KW_IF)
+            BinaryExpr bin;
+                if(list.size()>(1+parenShift)){
+                    switch(list.get(1+parenShift).getKind()){
+                        case PLUS, MINUS,AND,OR,EQUALS,TIMES,DIV,GE,GT,LT,LE,MOD:
+                        if(list.size()>2+parenShift){
+                            if(list.get(2+parenShift).getKind() == Kind.KW_IF)
                             {
                                 throw new SyntaxException("Real good job there. No really. Im quite impressed. I don't know how you managed to mess it up this bad. I'm clapping. I'm happy for you. If only I was so blissfully ignorant.");
                             }
-                            IToken op = list.get(1);
+                            IToken op = list.get(1+parenShift);
                             IToken first = list.get(0);
-                            list.remove(0);
+                            for(int i = 0 ; i < 2+parenShift; i++)
                             list.remove(0);
                             ASTNode b = recursionParse(list);
-                            if(b instanceof Expr)
-                            return new BinaryExpr(first,(Expr)a,op,(Expr)b);
+                            if(b instanceof BinaryExpr){
+                                BinaryExpr _b = (BinaryExpr)b;
+                                if(!compareOp(op.getKind(), _b.getOp().getKind())){
+                                bin = new BinaryExpr(first,(Expr)a,op,_b.getLeft());
+                                return new BinaryExpr(first,bin,_b.getOp(),_b.getRight());
+                                }
+                                //return new BinaryExpr(first, left, op, right)
+                            } 
+                            if(b instanceof Expr) {
+                                return new BinaryExpr(first,(Expr)a,op,(Expr)b);
+                            }
                         } else{
-                            throw new LexicalException("Oopsie you made a stinky. Clean it up, you bastard");
+                            throw new SyntaxException("Oopsie you made a stinky and forgot something important. Clean it up, you bastard");
                         }
                         case LSQUARE:
+                        try{
                         if(list.get(3).getKind() == Kind.COMMA)
                         {
                             if(list.size() > 6)
@@ -176,6 +199,9 @@ public class Parser implements IParser {
                             }
                            
                         }
+                    } catch (IndexOutOfBoundsException e) {
+                        throw new SyntaxException("Nope. Forgot something, dipshit");
+                    }
                         
                         break;
                     }
@@ -186,11 +212,56 @@ public class Parser implements IParser {
         return a;
     }
     
+    //Determines if left operator should take priority over right operator
+    public boolean compareOp(Kind l, Kind r) throws SyntaxException{
+        switch(l){
+            case OR, AND:
+            switch(r){
+                case OR,AND:
+                return false;
+                default:
+                return true;
+            }
+            case GE, EQUALS, GT, LE, LT:
+                switch(r){
+                    case OR,AND,GE, EQUALS, GT, LE, LT:
+                    return false;
+                    default:
+                    return true;
+                }
+            case TIMES, DIV, MOD:
+            switch(r){
+                case OR,AND:
+                return false;
+                case GE, EQUALS, GT, LE, LT,TIMES, DIV, MOD:
+                return false;
+                default:
+                return true;
+            }
+            case PLUS, MINUS:
+            switch(r){
+                case OR,AND:
+                return false;
+                case GE, EQUALS, GT, LE, LT:
+                return false;
+                case TIMES, DIV, MOD,PLUS, MINUS:
+                return false;
+                default:
+                return true;
+            }
+            default:
+            throw new SyntaxException("ummm, what did you even attempt to do? I have no idea what you just did, and I wrote this language.");
+            }
+    }
+
 
     @Override
     public ASTNode parse() throws PLCException {
        return recursionParse(listOfTokens);
     }
+
+
+    
 
 
     
