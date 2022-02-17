@@ -1,5 +1,6 @@
 package edu.ufl.cise.plc;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 import edu.ufl.cise.plc.IToken.Kind;
@@ -11,8 +12,10 @@ import edu.ufl.cise.plc.ast.Expr;
 import edu.ufl.cise.plc.ast.FloatLitExpr;
 import edu.ufl.cise.plc.ast.IdentExpr;
 import edu.ufl.cise.plc.ast.IntLitExpr;
+import edu.ufl.cise.plc.ast.PixelSelector;
 import edu.ufl.cise.plc.ast.StringLitExpr;
 import edu.ufl.cise.plc.ast.UnaryExpr;
+import edu.ufl.cise.plc.ast.UnaryExprPostfix;
 import edu.ufl.cise.plc.CompilerComponentFactory;
 
 public class Parser implements IParser {
@@ -38,7 +41,7 @@ public class Parser implements IParser {
 
     }
 
-    public ASTNode recursionParse(ArrayList<IToken> list) throws LexicalException{
+    public ASTNode recursionParse(ArrayList<IToken> list) throws PLCException{
         ASTNode a = null;
 
         //for(int i = 0; i < listOfTokens.size(); i++){
@@ -61,6 +64,15 @@ public class Parser implements IParser {
                 case INT_LIT:
                     a = new IntLitExpr(t);
                     break;
+                case LSQUARE:
+                    if(list.get(2).getKind() == Kind.COMMA)
+                    {
+                        ArrayList<IToken> listIdents = new ArrayList<IToken>();
+                        ArrayList<IToken> listIdents2 = new ArrayList<IToken>();
+                        listIdents.add(list.get(1));
+                        listIdents2.add(list.get(3));
+                        return new PixelSelector(list.get(0), (Expr)recursionParse(listIdents), (Expr)recursionParse(listIdents2));
+                    }
                 case KW_IF:
                 //IToken firstToken;
                 Expr condition;
@@ -104,18 +116,18 @@ public class Parser implements IParser {
                             throw new Exception();
                         }
                     } catch (Exception e) {
-                        throw new LexicalException("your if-statement is missing something, you sentient bag of burger meat");
+                        throw new SyntaxException("your if-statement is missing something, you sentient bag of burger meat");
                     }
                     a= new ConditionalExpr(t, condition, trueCase, falseCase);
 
                 break;
                 case BANG,MINUS,COLOR_OP, IMAGE_OP:
                     list.remove(0);
-                    ASTNode newNode = (Expr)recursionParse(list);
-                    if(newNode instanceof Expr)
+                    //ASTNode newNode = (Expr)recursionParse(list);
+                    //if(newNode instanceof Expr)
                     return new UnaryExpr(t, t, (Expr)recursionParse(list));
-                    else 
-                    throw new LexicalException("You pile of catshit. Look at what you did to the code");
+                   // else 
+                    //throw new LexicalException("You pile of catshit. Look at what you did to the code");
                 default:
                 //ligma
                 break;
@@ -124,6 +136,10 @@ public class Parser implements IParser {
                     switch(list.get(1).getKind()){
                         case PLUS, MINUS,AND,OR:
                         if(list.size()>2){
+                            if(list.get(2).getKind() == Kind.KW_IF)
+                            {
+                                throw new SyntaxException("Real good job there. No really. Im quite impressed. I don't know how you managed to mess it up this bad. I'm clapping. I'm happy for you. If only I was so blissfully ignorant.");
+                            }
                             IToken op = list.get(1);
                             IToken first = list.get(0);
                             list.remove(0);
@@ -134,6 +150,33 @@ public class Parser implements IParser {
                         } else{
                             throw new LexicalException("Oopsie you made a stinky. Clean it up, you bastard");
                         }
+                        case LSQUARE:
+                        if(list.get(3).getKind() == Kind.COMMA)
+                        {
+                            if(list.size() > 6)
+                            {
+                                ArrayList<IToken> partOne = new ArrayList<IToken>();
+                                for(int i = 0; i < 6; i++)
+                                {
+                                    partOne.add(list.get(i));
+                                }
+                                ArrayList<IToken> partTwo = new ArrayList<IToken>();
+                                for(int i = 7; i < list.size(); i++ )
+                                {
+                                    partTwo.add(list.get(i));
+                                }
+                                return new BinaryExpr(list.get(0), (Expr)recursionParse(partOne), list.get(6), (Expr)recursionParse(partTwo));
+                            }
+                            else
+                            {
+                                ArrayList<IToken> listIdent = new ArrayList<IToken>();
+                                listIdent.add(list.get(0));
+                                list.remove(0);
+                                return new UnaryExprPostfix(list.get(0), (Expr)recursionParse(listIdent), (PixelSelector)recursionParse(list));
+                            }
+                           
+                        }
+                        
                         break;
                     }
                 }

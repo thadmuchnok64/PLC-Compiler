@@ -336,4 +336,93 @@ class Assignment2StarterTests {
 		});
 		show(e);
 	}
+
+	@DisplayName("testEOF")
+@Test
+public void testEOF(TestInfo testinfo) throws Exception{
+  String input = """
+        x +
+        """;
+  show("-------------");
+  show(input);
+  Exception e =assertThrows(SyntaxException.class,() ->{
+     getAST(input);
+  });
+  show(e);
+}
+
+
+public void invalidConditionalChecker(String input) throws Exception{
+	show("-------------");
+	show(input);
+	Exception e =assertThrows(SyntaxException.class,() ->{
+	   getAST(input);
+	});
+	show(e);
+  }
+  
+  
+  @DisplayName("testInvalidConditional1")
+  @Test
+  public void testInvalidConditional1(TestInfo testInfo)throws Exception{
+  
+	String input = """
+		  if (
+		  """;
+	invalidConditionalChecker(input);
+  
+	String input2 = """
+		  if (b
+		  """;
+	invalidConditionalChecker(input2);
+  
+	String input3 = """
+		  if (b)
+		  """;
+	invalidConditionalChecker(input3);
+  
+	String input4 = """
+		  if (b) x
+		  """;
+	invalidConditionalChecker(input4);
+  
+	String input5 = """
+		  if (b) x else
+		  """;
+	invalidConditionalChecker(input5);
+  
+	String input6 = """
+		  if (b) x else
+		  """;
+	invalidConditionalChecker(input6);
+  
+	String input7 = """
+		  if (b) x else y
+		  """;
+	invalidConditionalChecker(input7);
+  
+	String input8 = """
+		  if (b) x else y test
+		  """;
+	invalidConditionalChecker(input8);
+  
+  
+  }
+
+  @DisplayName("testPixelError")
+@Test
+public void testPixelError(TestInfo testinfo) throws Exception{
+  String input = """
+      a[,
+      """;
+  show("-------------");
+  show(input);
+  Exception e = assertThrows(SyntaxException.class,() ->{
+     getAST(input);
+  });
+  show(e);
+}
+
+
+
 }
