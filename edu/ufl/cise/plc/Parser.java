@@ -217,7 +217,7 @@ public class Parser implements IParser {
                         int rSquareIndex = 0;
                         for(int i = list.indexOf(t) + 1; i < list.size(); i++)
                         {
-                            if(list.get(i).getKind() == Kind.COMMA)
+                            if(list.get(i).getKind() == Kind.COMMA && list.get(2).getKind() != Kind.COMMA)
                             {
                                 commaIndex = i;
                                 break;
@@ -234,7 +234,7 @@ public class Parser implements IParser {
                         for(int i = commaIndex + 1; i < list.size(); i++)
                         {
                             
-                            if(list.get(i).getKind() == Kind.RSQUARE)
+                            if(list.get(i).getKind() == Kind.RSQUARE && list.get(i-1).getKind() != Kind.COMMA)
                             {
                                 rSquareIndex = i;
                                 break;
