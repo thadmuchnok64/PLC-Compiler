@@ -60,14 +60,51 @@ public class Parser implements IParser {
                     a = new IntLitExpr(t);
                     break;
                 case LSQUARE:
-                    if(list.get(2).getKind() == Kind.COMMA)
-                    {
+                    //if(list.get(2).getKind() == Kind.COMMA)
+                    //{
+                        /*
                         ArrayList<IToken> listIdents = new ArrayList<IToken>();
                         ArrayList<IToken> listIdents2 = new ArrayList<IToken>();
                         listIdents.add(list.get(1));
                         listIdents2.add(list.get(3));
                         return new PixelSelector(list.get(0), (Expr)recursionParse(listIdents), (Expr)recursionParse(listIdents2));
-                    }
+                        */
+                        ArrayList<IToken> partOne = new ArrayList<IToken>();
+                        ArrayList<IToken> partTwo = new ArrayList<IToken>();
+                        int commaIndex = 0;
+                        int rSquareIndex = 0;
+                        for(int i = list.indexOf(t) + 1; i < list.size(); i++)
+                        {
+                            if(list.get(i).getKind() == Kind.COMMA)
+                            {
+                                commaIndex = i;
+                                break;
+                            }
+                            partOne.add(list.get(i));
+                            
+                            if(i == list.size() - 1)
+                            {
+                                throw new SyntaxException("Nice one");
+                            }
+                            
+                        }
+
+                        for(int i = commaIndex + 1; i < list.size(); i++)
+                        {
+                            
+                            if(list.get(i).getKind() == Kind.RSQUARE)
+                            {
+                                rSquareIndex = i;
+                                break;
+                            }
+                            partTwo.add(list.get(i));
+                            if(i == list.size() - 1)
+                            {
+                                throw new SyntaxException("Nice one");
+                            }
+                        }
+                        return new PixelSelector(list.get(0), (Expr)recursionParse(partOne), (Expr)recursionParse(partTwo));
+                   // }
                 case KW_IF:
                 //IToken firstToken;
                 Expr condition;
@@ -188,7 +225,66 @@ public class Parser implements IParser {
                         }
                         case LSQUARE:
                         try{
-                        if(list.get(3).getKind() == Kind.COMMA)
+                        ArrayList<IToken> partOne = new ArrayList<IToken>();
+                        ArrayList<IToken> partTwo = new ArrayList<IToken>();
+                        int commaIndex = 0;
+                        int rSquareIndex = 0;
+                        for(int i = list.indexOf(t) + 1; i < list.size(); i++)
+                        {
+                            if(list.get(i).getKind() == Kind.COMMA)
+                            {
+                                commaIndex = i;
+                                break;
+                            }
+                            partOne.add(list.get(i));
+                            
+                            if(i == list.size() - 1)
+                            {
+                                throw new SyntaxException("Nice one");
+                            }
+                            
+                        }
+
+                        for(int i = commaIndex + 1; i < list.size(); i++)
+                        {
+                            
+                            if(list.get(i).getKind() == Kind.RSQUARE)
+                            {
+                                rSquareIndex = i;
+                                break;
+                            }
+                            partTwo.add(list.get(i));
+                            if(i == list.size() - 1)
+                            {
+                                throw new SyntaxException("Nice one");
+                            }
+                        }
+                        if(rSquareIndex < list.size()-1)
+                        {
+                            ArrayList<IToken> pixelPart = new ArrayList<IToken>();
+                            ArrayList<IToken> notPixelPart = new ArrayList<IToken>();
+                            for(int i = 0; i < rSquareIndex + 1; i++)
+                            {
+                                pixelPart.add(list.get(i));
+                            }
+                            for(int i = rSquareIndex + 2; i < list.size(); i++)
+                            { 
+                                notPixelPart.add(list.get(i));
+                            }
+                            switch(list.get(rSquareIndex + 1).getKind())
+                            {
+                                case PLUS, TIMES, MINUS, DIV:
+                                return new BinaryExpr(list.get(0), (Expr)recursionParse(pixelPart), list.get(rSquareIndex + 1), (Expr)recursionParse(notPixelPart));
+                            }
+                        }
+                        else
+                        {
+                            ArrayList<IToken> listIdent = new ArrayList<IToken>();
+                            listIdent.add(list.get(0));
+                            list.remove(0);
+                            return new UnaryExprPostfix(list.get(0), (Expr)recursionParse(listIdent), (PixelSelector)recursionParse(list));
+                        }
+                        /*if(list.get(3).getKind() == Kind.COMMA)
                         {
                             if(list.size() > 6)
                             {
@@ -213,6 +309,7 @@ public class Parser implements IParser {
                             }
                            
                         }
+                        */
                     } catch (IndexOutOfBoundsException e) {
                         throw new SyntaxException("Nope. Forgot something, dipshit");
                     }
