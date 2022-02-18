@@ -181,7 +181,7 @@ public class Parser implements IParser {
                 //ligma
                 break;
             }
-            BinaryExpr bin;
+            BinaryExpr bin,bin2;
                 if(list.size()>(1+parenShift)){
                     switch(list.get(1+parenShift).getKind()){
                         case PLUS, MINUS,AND,OR,EQUALS,TIMES,DIV,GE,GT,LT,LE,MOD:
@@ -198,6 +198,20 @@ public class Parser implements IParser {
                             if(b instanceof BinaryExpr){
                                 BinaryExpr _b = (BinaryExpr)b;
                                 if(!compareOp(op.getKind(), _b.getOp().getKind())){
+
+                                if(_b.getLeft() instanceof BinaryExpr){
+                                    BinaryExpr lefty = (BinaryExpr)_b.getLeft();
+                                    if(!compareOp(op.getKind(), lefty.getOp().getKind())){
+                                        bin = new BinaryExpr(first,(Expr)a,op,lefty.getLeft());
+                                        bin2 = new BinaryExpr(first,bin,lefty.getOp(),_b.getLeft());
+                                        return new BinaryExpr(first,bin2,_b.getOp(),_b.getRight());
+
+
+
+                                    }
+                                }
+
+
                                 bin = new BinaryExpr(first,(Expr)a,op,_b.getLeft());
                                 return new BinaryExpr(first,bin,_b.getOp(),_b.getRight());
                                 }
@@ -326,16 +340,16 @@ public class Parser implements IParser {
                     default:
                     return true;
                 }
-            case TIMES, DIV, MOD:
+            case PLUS, MINUS:
             switch(r){
                 case OR,AND:
                 return false;
-                case GE, EQUALS, GT, LE, LT,TIMES, DIV, MOD:
+                case GE, EQUALS, GT, LE, LT, PLUS, MINUS:
                 return false;
                 default:
                 return true;
             }
-            case PLUS, MINUS:
+            case TIMES, DIV, MOD:
             switch(r){
                 case OR,AND:
                 return false;
