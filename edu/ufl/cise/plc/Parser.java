@@ -256,7 +256,7 @@ public class Parser implements IParser {
                             throw new SyntaxException("Oopsie you made a stinky and forgot something important. Clean it up, you bastard");
                         }
                         case LSQUARE:
-                        try{
+                        try{ //TODO: FIX THIS SHIT
                         ArrayList<IToken> partOne = new ArrayList<IToken>();
                         ArrayList<IToken> partTwo = new ArrayList<IToken>();
                         int commaIndex = 0;
