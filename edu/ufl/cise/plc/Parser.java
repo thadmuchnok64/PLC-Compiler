@@ -184,7 +184,7 @@ public class Parser implements IParser {
             BinaryExpr bin,bin2;
                 if(list.size()>(1+parenShift)){
                     switch(list.get(1+parenShift).getKind()){
-                        case PLUS, MINUS,AND,OR,EQUALS,TIMES,DIV,GE,GT,LT,LE,MOD:
+                        case PLUS, MINUS,AND,OR,EQUALS,TIMES,DIV,GE,GT,LT,LE,MOD,NOT_EQUALS:
                         if(list.size()>2+parenShift){
                             if(list.get(2+parenShift).getKind() == Kind.KW_IF)
                             {
@@ -199,16 +199,48 @@ public class Parser implements IParser {
                                 BinaryExpr _b = (BinaryExpr)b;
                                 if(!compareOp(op.getKind(), _b.getOp().getKind())){
 
+                                    ArrayList<BinaryExpr> binList = new ArrayList<BinaryExpr>();
                                 if(_b.getLeft() instanceof BinaryExpr){
                                     BinaryExpr lefty = (BinaryExpr)_b.getLeft();
+                                    binList.add(lefty);
+                                    while(lefty instanceof BinaryExpr){
+                                    
+                                    //bin2 = new BinaryExpr(first,bin,lefty.getOp(),_b.getLeft());
+                                    
                                     if(!compareOp(op.getKind(), lefty.getOp().getKind())){
+                                        
+                                        BinaryExpr lefty2 = null;
+                                        if(lefty.getLeft()!=null&&lefty.getLeft() instanceof BinaryExpr){
+                                            lefty2 = (BinaryExpr)lefty.getLeft();
+
+                                        } 
+                                        if(lefty2!=null&&!compareOp(op.getKind(), lefty2.getOp().getKind())){
+                                            lefty = (BinaryExpr)lefty.getLeft();
+                                            binList.add(lefty);
+                                        } else{
+                                        bin = new BinaryExpr(first,(Expr)a,op,lefty.getLeft());
+                                        for(int i = binList.size()-1;i>=0;i--){
+                                        bin = new BinaryExpr(first, bin, binList.get(i).getOp(), binList.get(i).getRight());
+                                        }
+                                        return new BinaryExpr(first,bin,_b.getOp(),_b.getRight());
+                                    }
+                                       /*
                                         bin = new BinaryExpr(first,(Expr)a,op,lefty.getLeft());
                                         bin2 = new BinaryExpr(first,bin,lefty.getOp(),_b.getLeft());
                                         return new BinaryExpr(first,bin2,_b.getOp(),_b.getRight());
+                                        */
 
 
+                                    } else{
+                                        if(lefty.getLeft()!=null&&lefty.getLeft() instanceof BinaryExpr){
+                                        lefty = (BinaryExpr)lefty.getLeft();
+                                        binList.add(lefty);
+                                        } else{
+                                            break;
+                                        }
 
                                     }
+                                }
                                 }
 
 
@@ -284,32 +316,7 @@ public class Parser implements IParser {
                             list.remove(0);
                             return new UnaryExprPostfix(list.get(0), (Expr)recursionParse(listIdent), (PixelSelector)recursionParse(list));
                         }
-                        /*if(list.get(3).getKind() == Kind.COMMA)
-                        {
-                            if(list.size() > 6)
-                            {
-                                ArrayList<IToken> partOne = new ArrayList<IToken>();
-                                for(int i = 0; i < 6; i++)
-                                {
-                                    partOne.add(list.get(i));
-                                }
-                                ArrayList<IToken> partTwo = new ArrayList<IToken>();
-                                for(int i = 7; i < list.size(); i++ )
-                                {
-                                    partTwo.add(list.get(i));
-                                }
-                                return new BinaryExpr(list.get(0), (Expr)recursionParse(partOne), list.get(6), (Expr)recursionParse(partTwo));
-                            }
-                            else
-                            {
-                                ArrayList<IToken> listIdent = new ArrayList<IToken>();
-                                listIdent.add(list.get(0));
-                                list.remove(0);
-                                return new UnaryExprPostfix(list.get(0), (Expr)recursionParse(listIdent), (PixelSelector)recursionParse(list));
-                            }
-                           
-                        }
-                        */
+                       
                     } catch (IndexOutOfBoundsException e) {
                         throw new SyntaxException("Nope. Forgot something, dipshit");
                     }
@@ -330,12 +337,12 @@ public class Parser implements IParser {
             switch(r){
                 case OR,AND:
                 return false;
-                default:
-                return true;
             }
-            case GE, EQUALS, GT, LE, LT:
+                return true;
+            
+            case GE, EQUALS, GT, LE, LT,NOT_EQUALS:
                 switch(r){
-                    case OR,AND,GE, EQUALS, GT, LE, LT:
+                    case OR,AND,GE, EQUALS, GT, LE, LT,NOT_EQUALS:
                     return false;
                     default:
                     return true;
@@ -344,7 +351,7 @@ public class Parser implements IParser {
             switch(r){
                 case OR,AND:
                 return false;
-                case GE, EQUALS, GT, LE, LT, PLUS, MINUS:
+                case GE, EQUALS, GT, LE, LT,NOT_EQUALS,PLUS,MINUS:
                 return false;
                 default:
                 return true;
@@ -353,9 +360,9 @@ public class Parser implements IParser {
             switch(r){
                 case OR,AND:
                 return false;
-                case GE, EQUALS, GT, LE, LT:
+                case GE, EQUALS, GT, LE, LT,NOT_EQUALS:
                 return false;
-                case TIMES, DIV, MOD,PLUS, MINUS:
+                case PLUS, MINUS,TIMES,DIV,MOD:
                 return false;
                 default:
                 return true;

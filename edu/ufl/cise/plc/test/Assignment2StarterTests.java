@@ -434,7 +434,7 @@ public void testPixelError(TestInfo testinfo) throws Exception{
 @Test
 public void testAllOperators(TestInfo testInfo) throws Exception {
 	String input = """
-			(false | 2 + 25 * 4/3 - 8 % a >= 0) == true
+			(false | 2 + 25 * 4/3 - 8 % 1 >= 0) == true
 			""";
 	show("-------------");
 	show(input);
@@ -496,8 +496,11 @@ public void testAllOperators(TestInfo testInfo) throws Exception {
 	assertEquals(8, ((IntLitExpr) eight).getValue());
 	
 	Expr un = ((BinaryExpr) mod).getRight();
-	assertThat("", un, instanceOf(UnaryExprPostfix.class));
+	assertEquals(1, ((IntLitExpr) un).getValue());
+	//Expr un = ((BinaryExpr) mod).getRight();
+	//assertThat("", un, instanceOf(UnaryExprPostfix.class));
 	
+	/*
 	Expr a = ((UnaryExprPostfix) un).getExpr();
 	assertThat("", a, instanceOf(IdentExpr.class));
 	assertEquals("a", a.getText());
@@ -521,7 +524,7 @@ public void testAllOperators(TestInfo testInfo) throws Exception {
 	Expr one = ((PixelSelector) sel).getY();
 	assertThat("", one, instanceOf(IntLitExpr.class));
 	assertEquals(1, ((IntLitExpr) one).getValue());
-	
+	*/
 	Expr zero = ((BinaryExpr) ge).getRight();
 	assertThat("", zero, instanceOf(IntLitExpr.class));
 	assertEquals(0, ((IntLitExpr) zero).getValue());
