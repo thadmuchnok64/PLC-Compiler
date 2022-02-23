@@ -60,51 +60,34 @@ public class Parser implements IParser {
                     a = new IntLitExpr(t);
                     break;
                 case LSQUARE:
-                    //if(list.get(2).getKind() == Kind.COMMA)
-                    //{
-                        /*
-                        ArrayList<IToken> listIdents = new ArrayList<IToken>();
-                        ArrayList<IToken> listIdents2 = new ArrayList<IToken>();
-                        listIdents.add(list.get(1));
-                        listIdents2.add(list.get(3));
-                        return new PixelSelector(list.get(0), (Expr)recursionParse(listIdents), (Expr)recursionParse(listIdents2));
-                        */
-                        ArrayList<IToken> partOne = new ArrayList<IToken>();
-                        ArrayList<IToken> partTwo = new ArrayList<IToken>();
-                        int commaIndex = 0;
-                        int rSquareIndex = 0;
-                        for(int i = list.indexOf(t) + 1; i < list.size(); i++)
-                        {
-                            if(list.get(i).getKind() == Kind.COMMA)
-                            {
-                                commaIndex = i;
-                                break;
-                            }
-                            partOne.add(list.get(i));
-                            
-                            if(i == list.size() - 1)
-                            {
-                                throw new SyntaxException("Nice one");
-                            }
-                            
-                        }
+                    
 
-                        for(int i = commaIndex + 1; i < list.size(); i++)
-                        {
-                            
-                            if(list.get(i).getKind() == Kind.RSQUARE)
-                            {
-                                rSquareIndex = i;
-                                break;
+                Expr x;
+                Expr y;
+                    try {
+                        int i = 1;
+                            i++;
+                            ArrayList<IToken> newList = new ArrayList<>();
+                            while(list.get(i).getKind()!=Kind.COMMA){
+                                newList.add(list.get(i));
+                                i++;
                             }
-                            partTwo.add(list.get(i));
-                            if(i == list.size() - 1)
-                            {
-                                throw new SyntaxException("Nice one");
+                            i++;
+                            x = (Expr)recursionParse(newList);
+                            newList.clear();
+                            //int ifCount = 0;
+                            while((list.get(i).getKind()!=Kind.RSQUARE)){
+                                
+                                newList.add(list.get(i));
+                                i++;
                             }
-                        }
-                        return new PixelSelector(list.get(0), (Expr)recursionParse(partOne), (Expr)recursionParse(partTwo));
-                   // }
+                            y = (Expr)recursionParse(newList);
+        } 
+        catch (IndexOutOfBoundsException e) {
+            throw new SyntaxException("Nice one.");
+        }
+        a= new PixelSelector(t, x, y);
+                   break;
                 case KW_IF:
                 //IToken firstToken;
                 Expr condition;
@@ -184,6 +167,44 @@ public class Parser implements IParser {
             BinaryExpr bin,bin2;
                 if(list.size()>(1+parenShift)){
                     switch(list.get(1+parenShift).getKind()){
+                        case LSQUARE:
+                        //TODO: FIX THIS SHIT
+                            
+
+                            Expr x;
+                            Expr y;
+                                try {
+                                    int i = 1;
+                                        i++;
+                                        ArrayList<IToken> newList = new ArrayList<>();
+                                        while(list.get(i).getKind()!=Kind.COMMA){
+                                            newList.add(list.get(i));
+                                            i++;
+                                        }
+                                        i++;
+                                        x = (Expr)recursionParse(newList);
+                                        newList.clear();
+                                        //int ifCount = 0;
+                                        while((list.get(i).getKind()!=Kind.RSQUARE)){
+                                            
+                                            newList.add(list.get(i));
+                                            i++;
+                                        }
+                                        parenShift += i;
+                                        y = (Expr)recursionParse(newList);
+                                        
+                    } 
+
+                    
+                    catch (IndexOutOfBoundsException e) {
+                        throw new SyntaxException("Nice one.");
+                    }
+                    Expr n = (Expr)a;
+                    a= new UnaryExprPostfix(t,n,new PixelSelector(t,x,y));
+                    
+                    if(list.size()>2+parenShift!=true){
+                        break;
+                    }
                         case PLUS, MINUS,AND,OR,EQUALS,TIMES,DIV,GE,GT,LT,LE,MOD,NOT_EQUALS:
                         if(list.size()>2+parenShift){
                             if(list.get(2+parenShift).getKind() == Kind.KW_IF)
@@ -255,74 +276,10 @@ public class Parser implements IParser {
                         } else{
                             throw new SyntaxException("Oopsie you made a stinky and forgot something important. Clean it up, you bastard");
                         }
-                        case LSQUARE:
-                        try{ //TODO: FIX THIS SHIT
-                        ArrayList<IToken> partOne = new ArrayList<IToken>();
-                        ArrayList<IToken> partTwo = new ArrayList<IToken>();
-                        int commaIndex = 0;
-                        int rSquareIndex = 0;
-                        for(int i = list.indexOf(t) + 1; i < list.size(); i++)
-                        {
-                            if(list.get(i).getKind() == Kind.COMMA && list.get(2).getKind() != Kind.COMMA)
-                            {
-                                commaIndex = i;
-                                break;
-                            }
-                            partOne.add(list.get(i));
-                            
-                            if(i == list.size() - 1)
-                            {
-                                throw new SyntaxException("Nice one");
-                            }
-                            
-                        }
-
-                        for(int i = commaIndex + 1; i < list.size(); i++)
-                        {
-                            
-                            if(list.get(i).getKind() == Kind.RSQUARE && list.get(i-1).getKind() != Kind.COMMA)
-                            {
-                                rSquareIndex = i;
-                                break;
-                            }
-                            partTwo.add(list.get(i));
-                            if(i == list.size() - 1)
-                            {
-                                throw new SyntaxException("Nice one");
-                            }
-                        }
-                        if(rSquareIndex < list.size()-1)
-                        {
-                            ArrayList<IToken> pixelPart = new ArrayList<IToken>();
-                            ArrayList<IToken> notPixelPart = new ArrayList<IToken>();
-                            for(int i = 0; i < rSquareIndex + 1; i++)
-                            {
-                                pixelPart.add(list.get(i));
-                            }
-                            for(int i = rSquareIndex + 2; i < list.size(); i++)
-                            { 
-                                notPixelPart.add(list.get(i));
-                            }
-                            switch(list.get(rSquareIndex + 1).getKind())
-                            {
-                                case PLUS, TIMES, MINUS, DIV:
-                                return new BinaryExpr(list.get(0), (Expr)recursionParse(pixelPart), list.get(rSquareIndex + 1), (Expr)recursionParse(notPixelPart));
-                            }
-                        }
-                        else
-                        {
-                            ArrayList<IToken> listIdent = new ArrayList<IToken>();
-                            listIdent.add(list.get(0));
-                            list.remove(0);
-                            return new UnaryExprPostfix(list.get(0), (Expr)recursionParse(listIdent), (PixelSelector)recursionParse(list));
-                        }
-                       
-                    } catch (IndexOutOfBoundsException e) {
-                        throw new SyntaxException("Nope. Forgot something, dipshit");
-                    }
                         
-                        break;
-                    }
+                    //a= new PixelSelector(t, x, y);
+
+                }
                 }
             
         //}
