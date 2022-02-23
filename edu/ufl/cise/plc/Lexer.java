@@ -234,7 +234,7 @@ public class Lexer implements ILexer {
                         } else if(ch=='#'){
                             if(currentState==State.START){
                                 if(chars.size()-1>posY){
-                                posY++;
+                              //  posY++;
                                 endScan = false;
                                 startLine++;
                                 }

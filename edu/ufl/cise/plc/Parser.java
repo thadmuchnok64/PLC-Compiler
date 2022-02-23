@@ -2,6 +2,7 @@ package edu.ufl.cise.plc;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.List;
 
 import edu.ufl.cise.plc.IToken.Kind;
 import edu.ufl.cise.plc.ast.ASTNode;
@@ -17,6 +18,14 @@ import edu.ufl.cise.plc.ast.StringLitExpr;
 import edu.ufl.cise.plc.ast.UnaryExpr;
 import edu.ufl.cise.plc.ast.UnaryExprPostfix;
 import edu.ufl.cise.plc.CompilerComponentFactory;
+import edu.ufl.cise.plc.ast.Types.Type;
+import edu.ufl.cise.plc.ast.NameDef;
+import edu.ufl.cise.plc.ast.Program;
+import edu.ufl.cise.plc.ast.VarDeclaration;
+import edu.ufl.cise.plc.ast.ColorExpr;
+import edu.ufl.cise.plc.ast.ColorConstExpr;
+import edu.ufl.cise.plc.ast.ConsoleExpr;
+
 
 public class Parser implements IParser {
 
@@ -35,7 +44,12 @@ public class Parser implements IParser {
 
 
     }
-
+    public ASTNode recursionParse(ArrayList<IToken> list, int offSet) throws PLCException{
+        for(int i = 0 ; i <offSet;i++){
+            list.remove(0);
+        }
+        return recursionParse(list);
+    }
     public ASTNode recursionParse(ArrayList<IToken> list) throws PLCException{
         ASTNode a = null;
         int parenShift = 0;
@@ -136,6 +150,98 @@ public class Parser implements IParser {
                     a= new ConditionalExpr(t, condition, trueCase, falseCase);
 
                 break;
+                case TYPE,KW_VOID:
+                    try {
+                        List<NameDef> params;
+                        params = new ArrayList<>();
+                        ArrayList<IToken> paramTokens = new ArrayList<>();
+                        if(list.size()<=2|| list.get(2).getKind()!=Kind.LPAREN){
+                            if(list.size()>3){
+                            return new VarDeclaration(t,new NameDef(list.get(0),list.get(0),list.get(1)),list.get(2),(Expr)recursionParse(list,3));
+                            } else{
+                                return new VarDeclaration(t,new NameDef(list.get(0),list.get(0),list.get(1)),null,null);
+                            }
+                        }
+                        int i;
+                        for(i = 3; i<list.size();i++){
+                            if(list.get(i).getKind()==Kind.RPAREN){
+                                try {
+                                    params.add(new NameDef(list.get(i),paramTokens.get(0),paramTokens.get(1)));
+                                paramTokens.clear();
+                                } catch (Exception e) {
+                                    break;
+                                }
+                                break;
+                            } else{
+                                if(list.get(i).getKind()!=Kind.COMMA){
+                                paramTokens.add(list.get(i));
+                                } else{
+                                params.add(new NameDef(list.get(i),paramTokens.get(0),paramTokens.get(1)));
+                                paramTokens.clear();
+                                }
+                            }
+                        }
+                        List<ASTNode> nodeList = new ArrayList();
+                        for( i = i+1 ; i<list.size();i++){
+                            if(list.get(i).getKind()!=Kind.SEMI){
+                            paramTokens.add(list.get(i));
+                            } else{
+                                nodeList.add(recursionParse(paramTokens));
+                                paramTokens.clear();
+                            }
+                        }
+                        a = new Program(t,Type.toType(t.getText()),list.get(1).getText(),params,nodeList);
+                    } catch (Exception e) {
+                        throw new SyntaxException("Okay that was my fault. TOTALLY my fault. I'm the one who didn't bother to fix their method and did something funky with it. I TOTALLY am responsible for this.");
+                    }
+                break;
+                case COLOR_CONST:
+                a = new ColorConstExpr(t);
+
+                break;
+                case LANGLE:
+                ArrayList<IToken> tokenlist = new ArrayList<>();
+
+                try {
+                    int i;
+                    Expr b=null,c=null,d=null;
+                    for(i = 1 ; i < list.size();i++){
+                        if(list.get(i).getKind()==Kind.COMMA){
+                            b = (Expr)recursionParse(tokenlist);
+                            tokenlist.clear();
+                            break;
+                        } else{
+                            tokenlist.add(list.get(i));
+
+                        }
+                    }
+                    for(i = i+1 ; i < list.size();i++){
+                        if(list.get(i).getKind()==Kind.COMMA){
+                            c = (Expr)recursionParse(tokenlist);
+                            tokenlist.clear();
+                            break;
+                        } else{
+                            tokenlist.add(list.get(i));
+
+                        }
+                    }
+                    for(i = i+1 ; i < list.size();i++){
+                        if(list.get(i).getKind()==Kind.RANGLE){
+                            d = (Expr)recursionParse(tokenlist);
+                            tokenlist.clear();
+                            break;
+                        } else{
+                            tokenlist.add(list.get(i));
+
+                        }
+                    }
+
+                    a= new ColorExpr(t,b,c,d);
+
+                } catch (Exception e) {
+                    throw new SyntaxException("Looks like you tried to make a color that doesn't exist, dumbo");
+                }
+                break;
                 case BANG,MINUS,COLOR_OP, IMAGE_OP:
                     list.remove(0);
                     //ASTNode newNode = (Expr)recursionParse(list);
@@ -159,6 +265,9 @@ public class Parser implements IParser {
                             }
                             parenShift = i;
                             a=recursionParse(newList);
+                break;
+                case KW_CONSOLE:
+                            a = new ConsoleExpr(t);
                 break;
                     default:
                 //ligma
