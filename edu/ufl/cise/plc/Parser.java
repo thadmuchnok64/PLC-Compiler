@@ -25,7 +25,12 @@ import edu.ufl.cise.plc.ast.VarDeclaration;
 import edu.ufl.cise.plc.ast.ColorExpr;
 import edu.ufl.cise.plc.ast.ColorConstExpr;
 import edu.ufl.cise.plc.ast.ConsoleExpr;
-
+import edu.ufl.cise.plc.ast.ReturnStatement;
+import edu.ufl.cise.plc.ast.ReadStatement;
+import edu.ufl.cise.plc.ast.WriteStatement;
+import edu.ufl.cise.plc.ast.NameDefWithDim;
+import edu.ufl.cise.plc.ast.Dimension;
+import edu.ufl.cise.plc.ast.AssignmentStatement;
 
 public class Parser implements IParser {
 
@@ -78,6 +83,7 @@ public class Parser implements IParser {
 
                 Expr x;
                 Expr y;
+                IToken name = null;
                     try {
                         int i = 1;
                             i++;
@@ -95,12 +101,22 @@ public class Parser implements IParser {
                                 newList.add(list.get(i));
                                 i++;
                             }
+                            i++;
+                            if(list.size()>i){
+                                name = list.get(i);
+                            }
                             y = (Expr)recursionParse(newList);
         } 
         catch (IndexOutOfBoundsException e) {
             throw new SyntaxException("Nice one.");
         }
+        if(t.getKind()==Kind.TYPE&&t.getText()=="image"){
+            
+            Dimension dim = new Dimension(t,x,y);
+            a = new NameDefWithDim(t,t,name,dim);
+        } else{
         a= new PixelSelector(t, x, y);
+        }
                    break;
                 case KW_IF:
                 //IToken firstToken;
@@ -155,7 +171,31 @@ public class Parser implements IParser {
                         List<NameDef> params;
                         params = new ArrayList<>();
                         ArrayList<IToken> paramTokens = new ArrayList<>();
-                        if(list.size()<=2|| list.get(2).getKind()!=Kind.LPAREN){
+                        if(list.size()>2&&Type.toType(t.getText())==Type.IMAGE&&list.get(2).getKind()!=Kind.LPAREN&&list.get(1).getKind()==Kind.LSQUARE){
+                            int i = 2;
+                            ArrayList<IToken> tlist = new ArrayList<>();
+                            ArrayList<IToken> tlist2 = new ArrayList<>();
+
+                            for( i=i ; i < list.size();i++){
+                                if(list.get(i).getKind()==Kind.COMMA){
+                                    i++;
+                                    break;
+                                }
+                                tlist.add(list.get(i));
+                            }
+                            for( i=i ; i < list.size();i++){
+                                if(list.get(i).getKind()==Kind.RSQUARE){
+                                    i++;
+                                    break;
+                                }
+                                tlist2.add(list.get(i));
+                            }
+                            Dimension dim = new Dimension(list.get(2),(Expr)recursionParse(tlist),(Expr)recursionParse(tlist2));
+                            //return new NameDefWithDim(t,t,list.get(i),dim);
+                            //Expr e =(Expr)recursionParse(list,i+2);
+                            return new VarDeclaration(t,new NameDefWithDim(t,t,list.get(i),dim),list.get(i+1),(Expr)recursionParse(list,i+2));
+                        }
+                        else if(list.size()<=2|| list.get(2).getKind()!=Kind.LPAREN){
                             if(list.size()>3){
                             return new VarDeclaration(t,new NameDef(list.get(0),list.get(0),list.get(1)),list.get(2),(Expr)recursionParse(list,3));
                             } else{
@@ -185,6 +225,10 @@ public class Parser implements IParser {
                         for( i = i+1 ; i<list.size();i++){
                             if(list.get(i).getKind()!=Kind.SEMI){
                             paramTokens.add(list.get(i));
+                            if(list.size()-1==i){
+
+                                throw new SyntaxException("spaghetti");
+                            }
                             } else{
                                 nodeList.add(recursionParse(paramTokens));
                                 paramTokens.clear();
@@ -242,6 +286,16 @@ public class Parser implements IParser {
                     throw new SyntaxException("Looks like you tried to make a color that doesn't exist, dumbo");
                 }
                 break;
+                case RETURN:
+                ArrayList<IToken> tlist = new ArrayList<>();
+                    for(int i = 1;i<list.size();i++){
+                        if(list.get(i).getKind()==Kind.SEMI){
+                            break;
+                        }
+                        tlist.add(list.get(i));
+                    }
+                    return new ReturnStatement(t,(Expr)recursionParse(tlist));
+                
                 case BANG,MINUS,COLOR_OP, IMAGE_OP:
                     list.remove(0);
                     //ASTNode newNode = (Expr)recursionParse(list);
@@ -269,6 +323,18 @@ public class Parser implements IParser {
                 case KW_CONSOLE:
                             a = new ConsoleExpr(t);
                 break;
+                case KW_WRITE:
+                ArrayList<IToken> ylist = new ArrayList<>();
+                int v;
+                for(v = 1 ; v < list.size();v++){
+                    if(list.get(v).getKind()==Kind.RARROW){
+
+                        break;
+                    }
+                    ylist.add(list.get(v));
+                }
+                return new WriteStatement(t,(Expr)recursionParse(ylist),(Expr)recursionParse(list,v+1));
+                
                     default:
                 //ligma
                 break;
@@ -276,12 +342,16 @@ public class Parser implements IParser {
             BinaryExpr bin,bin2;
                 if(list.size()>(1+parenShift)){
                     switch(list.get(1+parenShift).getKind()){
+                        case LARROW:
+                        return new ReadStatement(t,t.getText(),null,(Expr)recursionParse(list,2));
+                        case ASSIGN:
+                        return new AssignmentStatement(t,a.getText(),null,(Expr)recursionParse(list,2));
                         case LSQUARE:
-                        //TODO: FIX THIS SHIT
                             
 
                             Expr x;
                             Expr y;
+                            IToken name = null;
                                 try {
                                     int i = 1;
                                         i++;
@@ -300,6 +370,10 @@ public class Parser implements IParser {
                                             i++;
                                         }
                                         parenShift += i;
+                                        i++;
+                            if(list.size()>i){
+                                name = list.get(i);
+                            }
                                         y = (Expr)recursionParse(newList);
                                         
                     } 
@@ -309,8 +383,12 @@ public class Parser implements IParser {
                         throw new SyntaxException("Nice one.");
                     }
                     Expr n = (Expr)a;
+                    if(t.getKind()==Kind.TYPE&&t.getText()=="image"){
+                        Dimension dim = new Dimension(t,x,y);
+                        a = new NameDefWithDim(t,t,name,dim);
+                    } else{
                     a= new UnaryExprPostfix(t,n,new PixelSelector(t,x,y));
-                    
+                    }
                     if(list.size()>2+parenShift!=true){
                         break;
                     }
