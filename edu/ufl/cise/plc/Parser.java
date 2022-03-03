@@ -110,7 +110,7 @@ public class Parser implements IParser {
         catch (IndexOutOfBoundsException e) {
             throw new SyntaxException("Nice one.");
         }
-        if(t.getKind()==Kind.TYPE&&t.getText()=="image"){
+        if(t.getKind()==Kind.TYPE){
             
             Dimension dim = new Dimension(t,x,y);
             a = new NameDefWithDim(t,t,name,dim);
@@ -171,7 +171,7 @@ public class Parser implements IParser {
                         List<NameDef> params;
                         params = new ArrayList<>();
                         ArrayList<IToken> paramTokens = new ArrayList<>();
-                        if(list.size()>2&&Type.toType(t.getText())==Type.IMAGE&&list.get(2).getKind()!=Kind.LPAREN&&list.get(1).getKind()==Kind.LSQUARE){
+                        if(list.size()>2&&list.get(2).getKind()!=Kind.LPAREN&&list.get(1).getKind()==Kind.LSQUARE){
                             int i = 2;
                             ArrayList<IToken> tlist = new ArrayList<>();
                             ArrayList<IToken> tlist2 = new ArrayList<>();
@@ -193,7 +193,10 @@ public class Parser implements IParser {
                             Dimension dim = new Dimension(list.get(2),(Expr)recursionParse(tlist),(Expr)recursionParse(tlist2));
                             //return new NameDefWithDim(t,t,list.get(i),dim);
                             //Expr e =(Expr)recursionParse(list,i+2);
+                            if(list.size()>i+1)
                             return new VarDeclaration(t,new NameDefWithDim(t,t,list.get(i),dim),list.get(i+1),(Expr)recursionParse(list,i+2));
+                            else
+                            return new NameDefWithDim(t,t,list.get(i),dim);
                         }
                         else if(list.size()<=2|| list.get(2).getKind()!=Kind.LPAREN){
                             if(list.size()>3){
@@ -203,39 +206,65 @@ public class Parser implements IParser {
                             }
                         }
                         int i;
+                        int parenCounter=0;
                         for(i = 3; i<list.size();i++){
-                            if(list.get(i).getKind()==Kind.RPAREN){
+                            if(list.get(i).getKind()==Kind.RPAREN&&parenCounter<1){
                                 try {
+                                    if(paramTokens.size() > 2){
+                                        params.add((NameDefWithDim)recursionParse(paramTokens));
+                                    } else{
                                     params.add(new NameDef(list.get(i),paramTokens.get(0),paramTokens.get(1)));
-                                paramTokens.clear();
+                                    }
+                                    paramTokens.clear();
                                 } catch (Exception e) {
                                     break;
                                 }
                                 break;
                             } else{
-                                if(list.get(i).getKind()!=Kind.COMMA){
+                                if(list.get(i).getKind()==Kind.LPAREN||list.get(i).getKind()==Kind.LSQUARE){
+                                    paramTokens.add(list.get(i));
+                                    parenCounter++;
+                                } else if(list.get(i).getKind()==Kind.RPAREN||list.get(i).getKind()==Kind.RSQUARE) {
+                                    paramTokens.add(list.get(i));
+                                    parenCounter--;
+                                }
+                                else if(list.get(i).getKind()!=Kind.COMMA||parenCounter>0){
                                 paramTokens.add(list.get(i));
                                 } else{
+                                    if(paramTokens.size() > 2){
+                                        params.add((NameDefWithDim)recursionParse(paramTokens));
+                                    } else{
                                 params.add(new NameDef(list.get(i),paramTokens.get(0),paramTokens.get(1)));
+                                    }
                                 paramTokens.clear();
                                 }
                             }
                         }
                         List<ASTNode> nodeList = new ArrayList();
+                        boolean initiated = false;
                         for( i = i+1 ; i<list.size();i++){
                             if(list.get(i).getKind()!=Kind.SEMI){
                             paramTokens.add(list.get(i));
-                            if(list.size()-1==i){
+                            if(list.size()-1==i&&initiated){
 
                                 throw new SyntaxException("spaghetti");
                             }
+                            initiated = true;
                             } else{
-                                nodeList.add(recursionParse(paramTokens));
+                                ASTNode nop = recursionParse(paramTokens);
+                                if(nop instanceof Expr){
+                                    throw new SyntaxException("uhm. I think you're missing something in that, line, silly.");
+                                }
+                                nodeList.add(nop);
                                 paramTokens.clear();
                             }
                         }
+                        if(list.get(1).getKind()!=Kind.IDENT){
+                            throw new SyntaxException("What kind of shit did you just try to name your function???!?!1 Dumbass");
+                        }
                         a = new Program(t,Type.toType(t.getText()),list.get(1).getText(),params,nodeList);
                     } catch (Exception e) {
+                        //test
                         throw new SyntaxException("Okay that was my fault. TOTALLY my fault. I'm the one who didn't bother to fix their method and did something funky with it. I TOTALLY am responsible for this.");
                     }
                 break;
@@ -342,8 +371,11 @@ public class Parser implements IParser {
             BinaryExpr bin,bin2;
                 if(list.size()>(1+parenShift)){
                     switch(list.get(1+parenShift).getKind()){
-                        case LARROW:
-                        return new ReadStatement(t,t.getText(),null,(Expr)recursionParse(list,2));
+                        case IDENT:
+                        if(t.getKind()!=Kind.KW_VOID&&t.getKind()!=Kind.TYPE){
+                            throw new SyntaxException("looks like you didn't put a type or void before your function, shitferbrains.");
+                        }
+                        break;
                         case ASSIGN:
                         return new AssignmentStatement(t,a.getText(),null,(Expr)recursionParse(list,2));
                         case LSQUARE:
@@ -392,7 +424,13 @@ public class Parser implements IParser {
                     if(list.size()>2+parenShift!=true){
                         break;
                     }
-                        case PLUS, MINUS,AND,OR,EQUALS,TIMES,DIV,GE,GT,LT,LE,MOD,NOT_EQUALS:
+                        case PLUS, MINUS,AND,OR,EQUALS,TIMES,DIV,GE,GT,LT,LE,MOD,NOT_EQUALS,LARROW:
+                        if(list.get(1+parenShift).getKind()==Kind.LARROW){
+                            if(a instanceof UnaryExprPostfix){
+                                return new ReadStatement(t,t.getText(),((UnaryExprPostfix)a).getSelector(),(Expr)recursionParse(list,2));
+                            }
+                            return new ReadStatement(t,t.getText(),null,(Expr)recursionParse(list,2));
+                            }
                         if(list.size()>2+parenShift){
                             if(list.get(2+parenShift).getKind() == Kind.KW_IF)
                             {
