@@ -1,7 +1,6 @@
 package edu.ufl.cise.plc.ast;
 
 import edu.ufl.cise.plc.IToken;
-import edu.ufl.cise.plc.ast.Types.Type;
 
 public class NameDefWithDim extends NameDef{
 
@@ -17,6 +16,7 @@ public class NameDefWithDim extends NameDef{
 		this.dim = dim;
 	}
 
+	@Override
 	public Dimension getDim() {
 		return dim;
 	}
@@ -31,5 +31,5 @@ public class NameDefWithDim extends NameDef{
 		return "NameDefWithDim [dim=" + dim + ", name=" + name + ", type=" + type + "]";
 	}
 	
-
+	
 }

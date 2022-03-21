@@ -39,6 +39,7 @@ public class Parser implements IParser {
 
     public Parser(String _input) throws LexicalException{
 
+            
         input = _input;
         ILexer lexer = CompilerComponentFactory.getLexer(input);
         listOfTokens = new ArrayList<>();
@@ -270,6 +271,7 @@ public class Parser implements IParser {
                 break;
                 case COLOR_CONST:
                 a = new ColorConstExpr(t);
+                 
 
                 break;
                 case LANGLE:
