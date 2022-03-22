@@ -4,6 +4,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.lang.model.element.ModuleElement.DirectiveKind;
+
+import org.junit.jupiter.api.Named;
+
 import edu.ufl.cise.plc.IToken.Kind;
 import edu.ufl.cise.plc.ast.ASTNode;
 import edu.ufl.cise.plc.ast.ASTVisitor;
@@ -48,6 +52,8 @@ public class TypeCheckVisitor implements ASTVisitor {
 		}
 	}
 	
+	//#region TYPE RETURNS
+
 	//The type of a BooleanLitExpr is always BOOLEAN.  
 	//Set the type in AST Node for later passes (code generation)
 	//Return the type for convenience in this visitor.  
@@ -59,14 +65,14 @@ public class TypeCheckVisitor implements ASTVisitor {
 
 	@Override
 	public Object visitStringLitExpr(StringLitExpr stringLitExpr, Object arg) throws Exception {
-		//TODO:  implement this method
-		throw new UnsupportedOperationException("Unimplemented visit method.");
+		stringLitExpr.setType(Type.STRING);
+		return Type.STRING;
 	}
 
 	@Override
 	public Object visitIntLitExpr(IntLitExpr intLitExpr, Object arg) throws Exception {
-		//TODO:  implement this method
-		throw new UnsupportedOperationException("Unimplemented visit method.");
+		intLitExpr.setType(Type.INT);
+		return Type.INT;
 	}
 
 	@Override
@@ -77,8 +83,8 @@ public class TypeCheckVisitor implements ASTVisitor {
 
 	@Override
 	public Object visitColorConstExpr(ColorConstExpr colorConstExpr, Object arg) throws Exception {
-		//TODO:  implement this method
-		throw new UnsupportedOperationException("Unimplemented visit method.");
+		colorConstExpr.setType(Type.COLOR);
+		return Type.COLOR;
 	}
 
 	@Override
@@ -101,7 +107,7 @@ public class TypeCheckVisitor implements ASTVisitor {
 		return exprType;
 	}	
 
-	
+	//#endregion
 	
 	//Maps forms a lookup table that maps an operator expression pair into result type.  
 	//This more convenient than a long chain of if-else statements. 
@@ -136,14 +142,62 @@ public class TypeCheckVisitor implements ASTVisitor {
 	//This method has several cases. Work incrementally and test as you go. 
 	@Override
 	public Object visitBinaryExpr(BinaryExpr binaryExpr, Object arg) throws Exception {
-		//TODO:  implement this method
-		throw new UnsupportedOperationException("Unimplemented visit method.");
+		
+		Kind op = binaryExpr.getOp().getKind();
+Type leftType = (Type) binaryExpr.getLeft().visit(this, arg);
+Type rightType = (Type) binaryExpr.getRight().visit(this, arg);
+Type resultType = null;
+switch(op) {//AND, OR, PLUS, MINUS, TIMES, DIV, MOD, EQUALS, NOT_EQUALS, LT, LE, GT,GE 
+case EQUALS,NOT_EQUALS -> {
+check(leftType == rightType, binaryExpr, "incompatible types for comparison");
+resultType = Type.BOOLEAN;
+}
+case PLUS -> {
+if (leftType == Type.INT && rightType == Type.INT) resultType = Type.INT;
+else if (leftType == Type.STRING && rightType == Type.STRING) resultType = Type.STRING;
+else if (leftType == Type.BOOLEAN && rightType == Type.BOOLEAN) resultType = Type.BOOLEAN;
+else check(false, binaryExpr, "incompatible types for operator");
+}
+case  MINUS -> {
+if (leftType == Type.INT && rightType == Type.INT) resultType = Type.INT;
+else if (leftType == Type.STRING && rightType == Type.STRING) resultType = Type.STRING;
+else check(false, binaryExpr, "incompatible types for operator");
+}
+case TIMES -> {
+if (leftType == Type.INT && rightType == Type.INT) resultType = Type.INT;
+else if (leftType == Type.BOOLEAN && rightType == Type.BOOLEAN) resultType = Type.BOOLEAN;
+else check(false, binaryExpr, "incompatible types for operator");
+}
+case DIV -> {
+if (leftType == Type.INT && rightType == Type.INT) resultType = Type.INT;
+else check(false, binaryExpr, "incompatible types for operator");
+}
+case LT, LE, GT, GE -> {
+if (leftType == rightType) resultType = Type.BOOLEAN;
+else check(false, binaryExpr, "incompatible types for operator");
+}
+default -> {
+throw new Exception("compiler error");
+}
+}
+binaryExpr.setType(resultType);
+return resultType;
 	}
 
 	@Override
 	public Object visitIdentExpr(IdentExpr identExpr, Object arg) throws Exception {
 		//TODO:  implement this method
-		throw new UnsupportedOperationException("Unimplemented visit method.");
+		String name = identExpr.getText();
+	Declaration dec = symbolTable.lookup(name);
+	if(arg instanceof Type){
+	identExpr.setCoerceTo((Type)arg);
+	}
+	check(dec != null, identExpr, "undefined identifier " + name);
+	check(dec.isInitialized(), identExpr, "using uninitialized variable");
+	identExpr.setDec(dec);  //save declaration--will be useful later. 
+	Type type = dec.getType();
+	identExpr.setType(type);
+	return type;
 	}
 
 	@Override
@@ -155,7 +209,11 @@ public class TypeCheckVisitor implements ASTVisitor {
 	@Override
 	public Object visitDimension(Dimension dimension, Object arg) throws Exception {
 		//TODO  implement this method
-		throw new UnsupportedOperationException();
+		Type xType = (Type) dimension.getWidth().visit(this, arg);
+		check(xType == Type.INT, dimension.getWidth(), "only ints as dimension components");
+		Type yType = (Type) dimension.getHeight().visit(this, arg);
+		check(yType == Type.INT, dimension.getHeight(), "only ints as dimension components");
+		return null;
 	}
 
 	@Override
@@ -197,8 +255,29 @@ public class TypeCheckVisitor implements ASTVisitor {
 
 	@Override
 	public Object visitVarDeclaration(VarDeclaration declaration, Object arg) throws Exception {
-		//TODO:  implement this method
-		throw new UnsupportedOperationException("Unimplemented visit method.");
+		try {
+			
+		
+		if(symbolTable.lookup(declaration.getName())==null){
+			if(declaration.getOp().getKind()==Kind.ASSIGN){
+				declaration.setInitialized(true);
+			if(declaration.getExpr() instanceof IdentExpr){
+				visitIdentExpr((IdentExpr)declaration.getExpr(), declaration.getNameDef().getType());
+				//declaration.setCoerceTo();
+			}
+			}
+			symbolTable.insert(declaration.getName(), declaration);
+			return null;
+		} else{
+			if(declaration.getOp().getKind()==Kind.EQUALS){
+				symbolTable.lookup(declaration.getName()).setInitialized(true);
+			}
+		throw new TypeCheckException("There is already a variable for "+declaration.getName()+", you absolute chimp brain");
+		}
+	} catch (Exception e) {
+		throw new TypeCheckException("You have commited a great atrocity in this code.");
+
+	}
 	}
 
 
@@ -211,6 +290,9 @@ public class TypeCheckVisitor implements ASTVisitor {
 		
 		//Check declarations and statements
 		List<ASTNode> decsAndStatements = program.getDecsAndStatements();
+		for (ASTNode node : program.getParams()) {
+			node.visit(this, true);
+		}
 		for (ASTNode node : decsAndStatements) {
 			node.visit(this, arg);
 		}
@@ -219,8 +301,15 @@ public class TypeCheckVisitor implements ASTVisitor {
 
 	@Override
 	public Object visitNameDef(NameDef nameDef, Object arg) throws Exception {
-		//TODO:  implement this method
-		throw new UnsupportedOperationException();
+		if(symbolTable.lookup(nameDef.getName())==null){
+			symbolTable.insert(nameDef.getName(), nameDef);
+			if(arg instanceof Boolean){
+			symbolTable.lookup(nameDef.getName()).setInitialized((boolean)arg);
+			}
+			return null;
+		} else{
+		throw new TypeCheckException("There is already a variable for "+nameDef.getName()+", you absolute neanderthal");
+		}
 	}
 
 	@Override
