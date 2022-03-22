@@ -253,7 +253,7 @@ public class Parser implements IParser {
                             initiated = true;
                             } else{
                                 ASTNode nop = recursionParse(paramTokens);
-                                if(nop instanceof Expr){
+                                if(nop instanceof Expr &&(!(nop instanceof BinaryExpr)||((BinaryExpr)nop).getOp().getKind()!=Kind.ASSIGN)){
                                     throw new SyntaxException("uhm. I think you're missing something in that, line, silly.");
                                 }
                                 nodeList.add(nop);

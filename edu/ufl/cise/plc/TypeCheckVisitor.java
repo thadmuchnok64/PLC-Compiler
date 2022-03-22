@@ -202,7 +202,11 @@ return resultType;
 
 	@Override
 	public Object visitConditionalExpr(ConditionalExpr conditionalExpr, Object arg) throws Exception {
-		//TODO  implement this method
+		if(conditionalExpr.getCondition().getType()!=Type.BOOLEAN
+		&& conditionalExpr.getTrueCase().getType()==conditionalExpr.getFalseCase().getType()){
+			return null;
+
+		}
 		throw new UnsupportedOperationException();
 	}
 
@@ -315,7 +319,16 @@ return resultType;
 	@Override
 	public Object visitNameDefWithDim(NameDefWithDim nameDefWithDim, Object arg) throws Exception {
 		//TODO:  implement this method
-		throw new UnsupportedOperationException();
+		if(symbolTable.lookup(nameDefWithDim.getName())==null){
+			symbolTable.insert(nameDefWithDim.getName(), nameDefWithDim);
+			if(arg instanceof Boolean){
+			symbolTable.lookup(nameDefWithDim.getName()).setInitialized((boolean)arg);
+			}
+			return null;
+		} else{
+		throw new TypeCheckException("There is already a variable for "+nameDefWithDim.getName()+", you absolute neanderthal");
+		}
+		//throw new UnsupportedOperationException();
 	}
  
 	@Override
