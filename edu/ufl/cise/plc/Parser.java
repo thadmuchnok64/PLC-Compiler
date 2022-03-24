@@ -498,6 +498,9 @@ public class Parser implements IParser {
                                 //return new BinaryExpr(first, left, op, right)
                             } 
                             if(b instanceof Expr) {
+                                if(op.getKind() ==Kind.ASSIGN){
+                                    return new AssignmentStatement(first,((IdentExpr)((UnaryExprPostfix)a).getExpr()).getText(),((UnaryExprPostfix)a).getSelector(),(Expr)b);
+                                }
                                 return new BinaryExpr(first,(Expr)a,op,(Expr)b);
                             }
                         } else{

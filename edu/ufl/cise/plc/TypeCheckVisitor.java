@@ -5,7 +5,9 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.lang.model.element.ModuleElement.DirectiveKind;
+import javax.print.DocFlavor.STRING;
 
+import org.hamcrest.core.IsInstanceOf;
 import org.junit.jupiter.api.Named;
 
 import edu.ufl.cise.plc.IToken.Kind;
@@ -143,7 +145,12 @@ public class TypeCheckVisitor implements ASTVisitor {
 	@Override
 	public Object visitBinaryExpr(BinaryExpr binaryExpr, Object arg) throws Exception {
 		
+		
+
 		Kind op = binaryExpr.getOp().getKind();
+		if(op==Kind.ASSIGN){
+			//
+		}
 Type leftType = (Type) binaryExpr.getLeft().visit(this, arg);
 Type rightType = (Type) binaryExpr.getRight().visit(this, arg);
 Type resultType = null;
@@ -186,11 +193,15 @@ return resultType;
 
 	@Override
 	public Object visitIdentExpr(IdentExpr identExpr, Object arg) throws Exception {
-		//TODO:  implement this method
 		String name = identExpr.getText();
 	Declaration dec = symbolTable.lookup(name);
 	if(arg instanceof Type){
+		if((Type)arg==BOOLEAN&&dec.getType()==INT){
+			identExpr.setCoerceTo(INT);
+
+		} else{
 	identExpr.setCoerceTo((Type)arg);
+		}
 	}
 	check(dec != null, identExpr, "undefined identifier " + name);
 	check(dec.isInitialized(), identExpr, "using uninitialized variable");
@@ -202,17 +213,21 @@ return resultType;
 
 	@Override
 	public Object visitConditionalExpr(ConditionalExpr conditionalExpr, Object arg) throws Exception {
-		if(conditionalExpr.getCondition().getType()!=Type.BOOLEAN
+		conditionalExpr.getTrueCase().visit(this, null);
+		conditionalExpr.getFalseCase().visit(this,null);
+		conditionalExpr.getCondition().visit(this, null);
+		if(conditionalExpr.getCondition().getType()==Type.BOOLEAN
 		&& conditionalExpr.getTrueCase().getType()==conditionalExpr.getFalseCase().getType()){
+			if(arg instanceof Type&&((Type)arg)==conditionalExpr.getTrueCase().getType())
 			return null;
 
 		}
-		throw new UnsupportedOperationException();
+		throw new TypeCheckException("your return types in your condition are kinda quirky");
+		//throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public Object visitDimension(Dimension dimension, Object arg) throws Exception {
-		//TODO  implement this method
 		Type xType = (Type) dimension.getWidth().visit(this, arg);
 		check(xType == Type.INT, dimension.getWidth(), "only ints as dimension components");
 		Type yType = (Type) dimension.getHeight().visit(this, arg);
@@ -236,8 +251,26 @@ return resultType;
 	//This method several cases--you don't have to implement them all at once.
 	//Work incrementally and systematically, testing as you go.  
 	public Object visitAssignmentStatement(AssignmentStatement assignmentStatement, Object arg) throws Exception {
-		//TODO:  implement this method
-		throw new UnsupportedOperationException("Unimplemented visit method.");
+		
+		assignmentStatement.getExpr().visit(this, arg);
+		
+		if(symbolTable.lookup(assignmentStatement.getName())==null){	
+		assignmentStatement.setTargetDec(new NameDef(assignmentStatement.getFirstToken(),assignmentStatement.getExpr().getType().toString().toLowerCase(), assignmentStatement.getName()));
+		symbolTable.insert(assignmentStatement.getName(), assignmentStatement.getTargetDec());
+		symbolTable.lookup(assignmentStatement.getName()).setInitialized(true);
+
+	} else{
+		if(symbolTable.lookup(assignmentStatement.getName()).getType()==assignmentStatement.getExpr().getType()){
+		symbolTable.lookup(assignmentStatement.getName()).setInitialized(true);
+		} else{
+			if(symbolTable.lookup(assignmentStatement.getName()).getType()==IMAGE&&assignmentStatement.getExpr() instanceof IntLitExpr){
+				assignmentStatement.getExpr().setCoerceTo(COLOR);
+				symbolTable.lookup(assignmentStatement.getName()).setInitialized(true);
+			}
+		}
+		//throw new TypeCheckException("you uhh what, uhh hwat, what in the name of sam hell did you try to do right there. you do realize how stupid that mistake you made was, right?");
+	}
+	return null;
 	}
 
 
@@ -253,8 +286,40 @@ return resultType;
 
 	@Override
 	public Object visitReadStatement(ReadStatement readStatement, Object arg) throws Exception {
-		//TODO:  implement this method
-		throw new UnsupportedOperationException("Unimplemented visit method.");
+		try {
+			readStatement.getSource().visit(this, arg);
+		if(readStatement.getSource().getType()!=STRING&&readStatement.getSource().getType()!=CONSOLE){
+			throw new TypeCheckException("stinky");
+		}
+		if(symbolTable.lookup(readStatement.getName())==null){	
+			readStatement.setTargetDec(new NameDef(readStatement.getFirstToken(),readStatement.getSource().getType().toString().toLowerCase(), readStatement.getName()));
+		symbolTable.insert(readStatement.getName(), readStatement.getTargetDec());
+		symbolTable.lookup(readStatement.getName()).setInitialized(true);
+
+	} else{
+		if(symbolTable.lookup(readStatement.getName()).getType()==readStatement.getSource().getType()){
+		symbolTable.lookup(readStatement.getName()).setInitialized(true);
+		} else{
+			if(symbolTable.lookup(readStatement.getName()).getType()==IMAGE&&readStatement.getSource().getType()==INT){
+				readStatement.getSource().setCoerceTo(COLOR);
+				symbolTable.lookup(readStatement.getName()).setInitialized(true);
+				readStatement.setTargetDec(new NameDef(readStatement.getFirstToken(),readStatement.getSource().getType().toString().toLowerCase(), readStatement.getName()));
+			}else if(symbolTable.lookup(readStatement.getName()).getType()==INT&&readStatement.getSource().getType()==STRING){
+				readStatement.setTargetDec(new NameDef(readStatement.getFirstToken(),symbolTable.lookup(readStatement.getName()).getType().toString().toLowerCase(), readStatement.getName()));
+				readStatement.getSource().setCoerceTo(STRING);
+				symbolTable.lookup(readStatement.getName()).setInitialized(true);
+			} else if(symbolTable.lookup(readStatement.getName()).getType()==INT&&readStatement.getSource().getType()==CONSOLE){
+				readStatement.setTargetDec(new NameDef(readStatement.getFirstToken(),symbolTable.lookup(readStatement.getName()).getType().toString().toLowerCase(), readStatement.getName()));
+				readStatement.getSource().setCoerceTo(INT);
+				symbolTable.lookup(readStatement.getName()).setInitialized(true);
+			}
+		}
+		//throw new TypeCheckException("you uhh what, uhh hwat, what in the name of sam hell did you try to do right there. you do realize how stupid that mistake you made was, right?");
+	}
+	return null;
+		} catch (Exception e) {
+			throw new TypeCheckException("What in the sam hell happened here? Did you use the right type for reading?");
+		}
 	}
 
 	@Override
@@ -287,7 +352,6 @@ return resultType;
 
 	@Override
 	public Object visitProgram(Program program, Object arg) throws Exception {		
-		//TODO:  this method is incomplete, finish it.  
 		
 		//Save root of AST so return type can be accessed in return statements
 		root = program;
@@ -318,7 +382,6 @@ return resultType;
 
 	@Override
 	public Object visitNameDefWithDim(NameDefWithDim nameDefWithDim, Object arg) throws Exception {
-		//TODO:  implement this method
 		if(symbolTable.lookup(nameDefWithDim.getName())==null){
 			symbolTable.insert(nameDefWithDim.getName(), nameDefWithDim);
 			if(arg instanceof Boolean){
@@ -328,14 +391,15 @@ return resultType;
 		} else{
 		throw new TypeCheckException("There is already a variable for "+nameDefWithDim.getName()+", you absolute neanderthal");
 		}
-		//throw new UnsupportedOperationException();
 	}
  
 	@Override
 	public Object visitReturnStatement(ReturnStatement returnStatement, Object arg) throws Exception {
 		Type returnType = root.getReturnType();  //This is why we save program in visitProgram.
-		Type expressionType = (Type) returnStatement.getExpr().visit(this, arg);
+		Type expressionType = (Type) returnStatement.getExpr().visit(this, returnType);
+		if(!(returnStatement.getExpr() instanceof ConditionalExpr))
 		check(returnType == expressionType, returnStatement, "return statement with invalid type");
+		returnStatement.getExpr().setType(returnType);
 		return null;
 	}
 
