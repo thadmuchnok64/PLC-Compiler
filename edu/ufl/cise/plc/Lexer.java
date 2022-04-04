@@ -191,6 +191,8 @@ public class Lexer implements ILexer {
                                 endScan = false;
                                 str = str + ch;
                                 currentState = State.HAVE_BIZZARE;
+                                try {
+                                    
                                 if(!theKindMap.containsKey(str + chars.get(posY).get(posX+1)))
                                 {
                                     if(chars.get(posY).get(posX+1)=='\n'||chars.get(posY).get(posX+1)=='\r'){
@@ -201,6 +203,9 @@ public class Lexer implements ILexer {
                                     endScan = true;
                                     posX++;
                                 }
+                            } catch (Exception e) {
+                                return new Token(Kind.EOF,null, 1, startLine,startPos);
+                            }
                             }
                     break; 
                     case '.':

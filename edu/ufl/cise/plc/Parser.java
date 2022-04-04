@@ -43,7 +43,7 @@ public class Parser implements IParser {
         input = _input;
         ILexer lexer = CompilerComponentFactory.getLexer(input);
         listOfTokens = new ArrayList<>();
-                while(lexer.peek().getKind()!=Kind.EOF){
+                while(lexer.peek()!=null&&lexer.peek().getKind()!=Kind.EOF){
                     listOfTokens.add(lexer.next());
                 }
 
