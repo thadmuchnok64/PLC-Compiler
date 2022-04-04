@@ -204,7 +204,22 @@ public class Lexer implements ILexer {
                                     posX++;
                                 }
                             } catch (Exception e) {
-                                return new Token(Kind.EOF,null, 1, startLine,startPos);
+                                if(ch==';'){
+                                    posX++;
+                                    if(increments){
+                                        column = posX;
+                                        row = posY;
+                                    }
+                                    newToken = new Token(Kind.SEMI,null, 1, startLine,startPos);
+                                    break;
+                                }
+                                posX++;
+                                    if(increments){
+                                        column = posX;
+                                        row = posY;
+                                    }
+                                newToken = new Token(Kind.EOF,null, 1, startLine,startPos);
+                                break;
                             }
                             }
                     break; 
