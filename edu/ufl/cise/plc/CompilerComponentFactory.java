@@ -1,5 +1,6 @@
 package edu.ufl.cise.plc;
 
+import edu.ufl.cise.plc.Parser;
 import edu.ufl.cise.plc.ast.ASTVisitor;
 
 //This class eliminates hard coded dependencies on the actual Lexer class.  You can call your lexer whatever you
