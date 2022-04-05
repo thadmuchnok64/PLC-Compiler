@@ -51,14 +51,13 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitBooleanLitExpr(BooleanLitExpr booleanLitExpr, Object arg) throws Exception {
-        // TODO Auto-generated method stub
-        return null;
+        return booleanLitExpr.getText();
     }
 
     @Override
     public Object visitStringLitExpr(StringLitExpr stringLitExpr, Object arg) throws Exception {
-        // TODO Auto-generated method stub
-        return null;
+        
+        return stringLitExpr.getText();
     }
 
     @Override
@@ -68,8 +67,7 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitFloatLitExpr(FloatLitExpr floatLitExpr, Object arg) throws Exception {
-        // TODO Auto-generated method stub
-        return null;
+        return ""+floatLitExpr.getText()+"f";
     }
 
     @Override
@@ -98,14 +96,12 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitBinaryExpr(BinaryExpr binaryExpr, Object arg) throws Exception {
-        // TODO Auto-generated method stub
-        return null;
+        return binaryExpr.getText();
     }
 
     @Override
     public Object visitIdentExpr(IdentExpr identExpr, Object arg) throws Exception {
-        // TODO Auto-generated method stub
-        return null;
+        return identExpr.getText();
     }
 
     @Override
@@ -144,6 +140,19 @@ public class CodeGenVisitor implements ASTVisitor {
         return null;
     }
 
+public String convertTypeToString(String s){
+    
+    switch(s){
+        case "string":
+            s = "String";
+            break;
+            default:
+            break;
+    }
+
+    return s;
+}
+
     @Override
     public Object visitProgram(Program program, Object arg) throws Exception {
         String s;
@@ -151,7 +160,11 @@ public class CodeGenVisitor implements ASTVisitor {
        // s ="package " + packageName+ ";" + "public static int apply(){return 42;}}";
 
        s ="package " + packageName+ ";" + " public class "+ program.getName() + "{ ";
-        s += " public static " + program.getReturnType().toString().toLowerCase()+ " apply(";
+        String type = program.getReturnType().toString().toLowerCase();
+        
+        type = convertTypeToString(type);
+ 
+       s += " public static " + type+ " apply(";
 
        List<ASTNode> decsAndStatements = program.getDecsAndStatements();
        for (ASTNode node : program.getParams()) {
@@ -190,8 +203,14 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitVarDeclaration(VarDeclaration declaration, Object arg) throws Exception {
-        // TODO Auto-generated method stub
-        return null;
+        String s = ""+convertTypeToString(declaration.getType().toString().toLowerCase()) +" " +declaration.getName();
+
+        if(declaration.isInitialized()){
+            s+= " = "+declaration.getExpr().visit(this, arg);
+        }
+
+        s +="; ";
+        return s;
     }
 
     @Override
