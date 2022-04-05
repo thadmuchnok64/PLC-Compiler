@@ -96,7 +96,7 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitBinaryExpr(BinaryExpr binaryExpr, Object arg) throws Exception {
-        return binaryExpr.getText();
+        return "(" + binaryExpr.getLeft().visit(this,arg) + " "+ binaryExpr.getOp().getText()+" " + binaryExpr.getRight().visit(this,arg)+")";
     }
 
     @Override
@@ -124,8 +124,7 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitAssignmentStatement(AssignmentStatement assignmentStatement, Object arg) throws Exception {
-        // TODO Auto-generated method stub
-        return null;
+        return assignmentStatement.getName() + " = " + assignmentStatement.getExpr().visit(this, arg) +";";
     }
 
     @Override
@@ -167,8 +166,15 @@ public String convertTypeToString(String s){
        s += " public static " + type+ " apply(";
 
        List<ASTNode> decsAndStatements = program.getDecsAndStatements();
+      
+       boolean multiple = false;
        for (ASTNode node : program.getParams()) {
-          s+= node.visit(this, true);
+         if(multiple){
+            s+=", ";
+         }
+         multiple = true;
+        s+= node.visit(this, true);
+          
        }
 
        s+= "){ ";
@@ -186,8 +192,7 @@ public String convertTypeToString(String s){
 
     @Override
     public Object visitNameDef(NameDef nameDef, Object arg) throws Exception {
-        // TODO Auto-generated method stub
-        return null;
+        return convertTypeToString(nameDef.getType().toString().toLowerCase())+" "+nameDef.getName();
     }
 
     @Override
@@ -205,7 +210,7 @@ public String convertTypeToString(String s){
     public Object visitVarDeclaration(VarDeclaration declaration, Object arg) throws Exception {
         String s = ""+convertTypeToString(declaration.getType().toString().toLowerCase()) +" " +declaration.getName();
 
-        if(declaration.isInitialized()){
+        if(declaration.isInitialized()&&declaration.getExpr()!=null){
             s+= " = "+declaration.getExpr().visit(this, arg);
         }
 
