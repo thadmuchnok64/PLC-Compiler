@@ -34,6 +34,7 @@ import edu.ufl.cise.plc.ast.ReadStatement;
 import edu.ufl.cise.plc.ast.ReturnStatement;
 import edu.ufl.cise.plc.ast.StringLitExpr;
 import edu.ufl.cise.plc.ast.Types.Type;
+import edu.ufl.cise.plc.runtime.ConsoleIO;
 import edu.ufl.cise.plc.ast.UnaryExpr;
 import edu.ufl.cise.plc.ast.UnaryExprPostfix;
 import edu.ufl.cise.plc.ast.VarDeclaration;
@@ -78,8 +79,8 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitConsoleExpr(ConsoleExpr consoleExpr, Object arg) throws Exception {
-        // TODO Auto-generated method stub
-        return null;
+        //return ConsoleIO.readValueFromConsole("INT", "HUH");
+        return "ConsoleIO.readValueFromConsole(\""+consoleExpr.getCoerceTo().toString()+"\", \"Please enter a value\")";
     }
 
     @Override
@@ -135,8 +136,7 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitReadStatement(ReadStatement readStatement, Object arg) throws Exception {
-        // TODO Auto-generated method stub
-        return null;
+        return readStatement.getName() + " = " + readStatement.getSource().visit(this, arg)+";";
     }
 
 public String convertTypeToString(String s){
@@ -158,7 +158,7 @@ public String convertTypeToString(String s){
         //"int y() ^42;"
        // s ="package " + packageName+ ";" + "public static int apply(){return 42;}}";
 
-       s ="package " + packageName+ ";" + " public class "+ program.getName() + "{ ";
+       s ="package " + packageName+ ";" +"public class "+ program.getName() + "{ ";
         String type = program.getReturnType().toString().toLowerCase();
         
         type = convertTypeToString(type);
