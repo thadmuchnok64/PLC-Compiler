@@ -407,11 +407,21 @@ public class Lexer implements ILexer {
 
 
         int line = 0;
+        boolean extraLine = true;
         for(int i = 0 ; i < c.length; i++){
-            chars.get(line).add(c[i]);
-            if(c[i]=='\n'){
+            if(c[i]!='\n'){
+                extraLine = false;
+            }
+            if(c[i]!='\n'||!extraLine){
+                chars.get(line).add(c[i]);
+
+            }
+            if(c[i]=='\n'&&!extraLine){
                 line++;
+                extraLine = true;
                 chars.add(new ArrayList<Character>());
+            } else {
+
             }
         }
     }

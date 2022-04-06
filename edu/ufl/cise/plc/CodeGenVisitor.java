@@ -91,13 +91,13 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitUnaryExpr(UnaryExpr unaryExpression, Object arg) throws Exception {
-        // TODO Auto-generated method stub
-        return null;
+        return ""+unaryExpression.getFirstToken().getText()+unaryExpression.getExpr().visit(this, arg);
     }
 
     @Override
     public Object visitBinaryExpr(BinaryExpr binaryExpr, Object arg) throws Exception {
         return "(" + binaryExpr.getLeft().visit(this,arg) + " "+ binaryExpr.getOp().getText()+" " + binaryExpr.getRight().visit(this,arg)+")";
+        
     }
 
     @Override
@@ -105,10 +105,25 @@ public class CodeGenVisitor implements ASTVisitor {
         return identExpr.getText();
     }
 
+    Object[] conditionalStatements ={"","",""};;
+
     @Override
     public Object visitConditionalExpr(ConditionalExpr conditionalExpr, Object arg) throws Exception {
-        // TODO Auto-generated method stub
-        return null;
+
+        //Object[] conditionalStrings = new String[3];
+
+        // conditional
+        conditionalStatements[0] = conditionalExpr.getCondition().visit(this, arg);
+
+        //true case
+        conditionalStatements[1] = conditionalExpr.getTrueCase().visit(this, arg);
+
+        //false case
+        conditionalStatements[2] = conditionalExpr.getFalseCase().visit(this, arg);
+
+
+
+        return "CONDITION";
     }
 
     @Override
@@ -203,19 +218,36 @@ public String convertTypeToString(String s){
 
     @Override
     public Object visitReturnStatement(ReturnStatement returnStatement, Object arg) throws Exception {
-        return "return " + returnStatement.getExpr().visit(this, arg)+";";
+        Object expr;
+
+
+        expr = returnStatement.getExpr().visit(this, arg);
+        if(expr == "CONDITION"){
+            return "if (" + conditionalStatements[0] +") { return " + conditionalStatements[1] +"; } else { return " + conditionalStatements[2]+"; }";
+        } else{
+        return "return " + expr +";";
+        }
+
+
+
     }
 
     @Override
     public Object visitVarDeclaration(VarDeclaration declaration, Object arg) throws Exception {
-        String s = ""+convertTypeToString(declaration.getType().toString().toLowerCase()) +" " +declaration.getName();
+        //String s =  ""+convertTypeToString(declaration.getType().toString().toLowerCase()) +" " +declaration.getName()+"; ";
 
         if(declaration.isInitialized()&&declaration.getExpr()!=null){
-            s+= " = "+declaration.getExpr().visit(this, arg);
+            if(declaration.getExpr().visit(this, arg)=="CONDITION"){
+                return ""+convertTypeToString(declaration.getType().toString().toLowerCase()) +" " +declaration.getName()+";  if (" + conditionalStatements[0] +") { " +declaration.getName() + " = "+ conditionalStatements[1] + "; } else { " +declaration.getName() + " = "+ conditionalStatements[2]+"; }";
+            } else{
+            return ""+convertTypeToString(declaration.getType().toString().toLowerCase()) +" " +declaration.getName() +" = "+declaration.getExpr().visit(this, arg)+"; ";
+            }
+        } else {
+            return ""+convertTypeToString(declaration.getType().toString().toLowerCase()) +" " +declaration.getName()+"; ";
         }
 
-        s +="; ";
-        return s;
+       // s +="; ";
+       // return s;
     }
 
     @Override
