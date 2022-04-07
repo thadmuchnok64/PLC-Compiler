@@ -199,8 +199,8 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitWriteStatement(WriteStatement writeStatement, Object arg) throws Exception {
-        // TODO Auto-generated method stub
-        return null;
+        //\"\"\"\n"+writeStatement.getSource().getText()+"\"\"\"
+        return convertTypeToString(writeStatement.getSource().getType().toString().toLowerCase())+ " ConsoleIO.console.println("+writeStatement.getSource().getText()+");";
     }
 
     @Override
