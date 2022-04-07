@@ -152,9 +152,7 @@ public class TypeCheckVisitor implements ASTVisitor {
 	public Object visitBinaryExpr(BinaryExpr binaryExpr, Object arg) throws Exception {
 
 		Kind op = binaryExpr.getOp().getKind();
-		if (op == Kind.ASSIGN) {
-			//
-		}
+
 		Type leftType = (Type) binaryExpr.getLeft().visit(this, arg);
 		Type rightType = (Type) binaryExpr.getRight().visit(this, arg);
 		Type resultType = null;
@@ -210,6 +208,8 @@ public class TypeCheckVisitor implements ASTVisitor {
 			}
 		}
 		binaryExpr.setType(resultType);
+		//if(leftType != rightType)
+		//binaryExpr.setCoerceTo(resultType);
 		return resultType;
 	}
 
@@ -240,8 +240,10 @@ public class TypeCheckVisitor implements ASTVisitor {
 		conditionalExpr.getCondition().visit(this, null);
 		if (conditionalExpr.getCondition().getType() == Type.BOOLEAN
 				&& conditionalExpr.getTrueCase().getType() == conditionalExpr.getFalseCase().getType()) {
-			if (arg instanceof Type && ((Type) arg) == conditionalExpr.getTrueCase().getType())
-				return null;
+					conditionalExpr.setType(conditionalExpr.getTrueCase().getType());
+
+					//if (arg instanceof Type && ((Type) arg) == conditionalExpr.getTrueCase().getType())
+				return conditionalExpr.getType();
 
 		}
 		throw new TypeCheckException("your return types in your condition are kinda quirky");
@@ -293,6 +295,13 @@ public class TypeCheckVisitor implements ASTVisitor {
 						&& assignmentStatement.getExpr() instanceof IntLitExpr) {
 					assignmentStatement.getExpr().setCoerceTo(COLOR);
 					symbolTable.lookup(assignmentStatement.getName()).setInitialized(true);
+				} else{
+					assignmentStatement.getExpr().setCoerceTo(symbolTable.lookup(assignmentStatement.getName()).getType());
+					symbolTable.lookup(assignmentStatement.getName()).setInitialized(true);
+					assignmentStatement.setTargetDec(new NameDef(assignmentStatement.getFirstToken(),
+					symbolTable.lookup(assignmentStatement.getName()).getType().toString().toLowerCase(), assignmentStatement.getName()));
+
+
 				}
 			}
 			// throw new TypeCheckException("you uhh what, uhh hwat, what in the name of sam
@@ -364,12 +373,16 @@ public class TypeCheckVisitor implements ASTVisitor {
 	@Override
 	public Object visitVarDeclaration(VarDeclaration declaration, Object arg) throws Exception {
 		try {
-
 			if (symbolTable.lookup(declaration.getName()) == null) {
 				if (declaration.getOp() != null && declaration.getOp().getKind() == Kind.ASSIGN) {
 					declaration.setInitialized(true);
+					if(declaration.getExpr()!=null){
+						declaration.getExpr().visit(this, arg);
+					}
 					if (declaration.getExpr() instanceof IdentExpr) {
+						
 						visitIdentExpr((IdentExpr) declaration.getExpr(), declaration.getNameDef().getType());
+						
 						// declaration.setCoerceTo();
 					}
 				}

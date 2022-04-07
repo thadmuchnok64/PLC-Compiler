@@ -96,6 +96,43 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitBinaryExpr(BinaryExpr binaryExpr, Object arg) throws Exception {
+        
+        
+        String s ="";
+        if(binaryExpr.getType()!=null)
+        s = ""+binaryExpr.getType().name();
+        String x = ""+binaryExpr.getCoerceTo();
+
+        String con = "";
+        con = ""+binaryExpr.getRight().visit(this,arg);
+
+        String fuck = "";
+        fuck = ""+binaryExpr.getLeft().visit(this,arg);
+
+        if(con.equals("CONDITION")){
+
+            //conditionalStatements[0] = conditionalExpr.getCondition().visit(this, arg);
+
+            //true case
+            conditionalStatements[1] = binaryExpr.getLeft().visit(this,arg) + " "+ binaryExpr.getOp().getText()+" "+conditionalStatements[1];
+    
+            //false case
+            conditionalStatements[2] = binaryExpr.getLeft().visit(this,arg) + " "+ binaryExpr.getOp().getText()+" "+ conditionalStatements[2];
+
+           return "CONDITION";
+
+            // return "if (" + conditionalStatements[0] +") { "+binaryExpr.getLeft().visit(this,arg) + " "+ binaryExpr.getOp().getText() + conditionalStatements[1] +"; } else { "+ binaryExpr.getLeft().visit(this,arg) + " "+ binaryExpr.getOp().getText() + conditionalStatements[2]+"; }";
+
+        } else if(fuck.equals("CONDITION")){
+
+            conditionalStatements[1] = conditionalStatements[1] + " "+ binaryExpr.getOp().getText()+" "+binaryExpr.getRight().visit(this,arg);
+    
+            //false case
+            conditionalStatements[2] = conditionalStatements[2] + " "+ binaryExpr.getOp().getText()+" "+ binaryExpr.getRight().visit(this,arg);
+
+           return "CONDITION";
+
+        }
         return "(" + binaryExpr.getLeft().visit(this,arg) + " "+ binaryExpr.getOp().getText()+" " + binaryExpr.getRight().visit(this,arg)+")";
         
     }
@@ -140,7 +177,11 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitAssignmentStatement(AssignmentStatement assignmentStatement, Object arg) throws Exception {
-        return assignmentStatement.getName() + " = " + assignmentStatement.getExpr().visit(this, arg) +";";
+        String con = "";
+        if(assignmentStatement.getTargetDec().getType()!=assignmentStatement.getExpr().getType()){
+            con = "("+convertTypeToString(assignmentStatement.getTargetDec().getType().toString().toLowerCase())+")";
+        }
+        return assignmentStatement.getName() + " = " +con+ assignmentStatement.getExpr().visit(this, arg) +";";
     }
 
     @Override
@@ -235,12 +276,15 @@ public String convertTypeToString(String s){
     @Override
     public Object visitVarDeclaration(VarDeclaration declaration, Object arg) throws Exception {
         //String s =  ""+convertTypeToString(declaration.getType().toString().toLowerCase()) +" " +declaration.getName()+"; ";
-
+        String typeCon ="";
         if(declaration.isInitialized()&&declaration.getExpr()!=null){
+            if(declaration.getType()!=declaration.getExpr().getType()){
+                typeCon = "("+convertTypeToString(declaration.getType().toString().toLowerCase())+")";
+            }
             if(declaration.getExpr().visit(this, arg)=="CONDITION"){
-                return ""+convertTypeToString(declaration.getType().toString().toLowerCase()) +" " +declaration.getName()+";  if (" + conditionalStatements[0] +") { " +declaration.getName() + " = "+ conditionalStatements[1] + "; } else { " +declaration.getName() + " = "+ conditionalStatements[2]+"; }";
+                return ""+convertTypeToString(declaration.getType().toString().toLowerCase()) +" " +declaration.getName()+";  if (" + conditionalStatements[0] +") { " +declaration.getName() + " = "+ typeCon+conditionalStatements[1] + "; } else { " +declaration.getName() + " = "+ typeCon+ conditionalStatements[2]+"; }";
             } else{
-            return ""+convertTypeToString(declaration.getType().toString().toLowerCase()) +" " +declaration.getName() +" = "+declaration.getExpr().visit(this, arg)+"; ";
+            return ""+convertTypeToString(declaration.getType().toString().toLowerCase()) +" " +declaration.getName() +" = "+typeCon+declaration.getExpr().visit(this, arg)+"; ";
             }
         } else {
             return ""+convertTypeToString(declaration.getType().toString().toLowerCase()) +" " +declaration.getName()+"; ";

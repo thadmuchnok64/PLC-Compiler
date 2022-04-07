@@ -443,6 +443,7 @@ void testCast() throws Exception {//a and d should be cast to a float type
 	  		^ c;
 	  		""";
 	  checkResult(input,  null, 10);
+	  //int c = (5.1f+5);
 	}
 
 	@Test
