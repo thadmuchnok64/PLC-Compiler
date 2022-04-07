@@ -77,9 +77,12 @@ public class CodeGenVisitor implements ASTVisitor {
         return null;
     }
 
+    boolean usesConsole = false;
+
     @Override
     public Object visitConsoleExpr(ConsoleExpr consoleExpr, Object arg) throws Exception {
         //return ConsoleIO.readValueFromConsole("INT", "HUH");
+        usesConsole = true;
         return "ConsoleIO.readValueFromConsole(\""+consoleExpr.getCoerceTo().toString()+"\", \"Please enter a value\")";
     }
 
@@ -133,6 +136,16 @@ public class CodeGenVisitor implements ASTVisitor {
            return "CONDITION";
 
         }
+            if(binaryExpr.getRight().getType()==Type.STRING&&binaryExpr.getLeft().getType()==Type.STRING){
+                if(binaryExpr.getOp().getKind()==Kind.EQUALS){
+                    return "(" + binaryExpr.getLeft().visit(this,arg) + ".equals(" + binaryExpr.getRight().visit(this,arg)+"))";
+                } else if(binaryExpr.getOp().getKind()==Kind.NOT_EQUALS){
+                    return "!(" + binaryExpr.getLeft().visit(this,arg) + ".equals(" + binaryExpr.getRight().visit(this,arg)+"))";
+                } else{
+                    throw new UnsupportedOperationException("what the fuck");
+                }
+            }
+
         return "(" + binaryExpr.getLeft().visit(this,arg) + " "+ binaryExpr.getOp().getText()+" " + binaryExpr.getRight().visit(this,arg)+")";
         
     }
@@ -178,7 +191,7 @@ public class CodeGenVisitor implements ASTVisitor {
     @Override
     public Object visitAssignmentStatement(AssignmentStatement assignmentStatement, Object arg) throws Exception {
         String con = "";
-        if(assignmentStatement.getTargetDec().getType()!=assignmentStatement.getExpr().getType()){
+        if(assignmentStatement.getTargetDec()!=null&&assignmentStatement.getTargetDec().getType()!=assignmentStatement.getExpr().getType()){
             con = "("+convertTypeToString(assignmentStatement.getTargetDec().getType().toString().toLowerCase())+")";
         }
         return assignmentStatement.getName() + " = " +con+ assignmentStatement.getExpr().visit(this, arg) +";";
@@ -210,16 +223,17 @@ public String convertTypeToString(String s){
 
     @Override
     public Object visitProgram(Program program, Object arg) throws Exception {
-        String s;
+        String s ="";
+        String packages;
         //"int y() ^42;"
        // s ="package " + packageName+ ";" + "public static int apply(){return 42;}}";
 
-       s ="package " + packageName+ ";" +"public class "+ program.getName() + "{ ";
+       packages ="package " + packageName+ "; ";
         String type = program.getReturnType().toString().toLowerCase();
         
         type = convertTypeToString(type);
  
-       s += " public static " + type+ " apply(";
+       s += "public class "+ program.getName() + "{ public static " + type+ " apply(";
 
        List<ASTNode> decsAndStatements = program.getDecsAndStatements();
       
@@ -240,7 +254,11 @@ public String convertTypeToString(String s){
 
        s+= "}}";
 
-       
+       if(usesConsole){
+        packages += "import edu.ufl.cise.plc.runtime.ConsoleIO; ";
+       }
+
+       s = packages + s;
        
         return s;
     }
