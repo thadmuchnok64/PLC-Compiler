@@ -205,7 +205,7 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitReadStatement(ReadStatement readStatement, Object arg) throws Exception {
-        return readStatement.getName() + " = " + readStatement.getSource().visit(this, arg)+";";
+        return readStatement.getName() + " = (" + convertTypeToString(readStatement.getTargetDec().getType().toString().toLowerCase()) +")"+ readStatement.getSource().visit(this, arg)+";";
     }
 
 public String convertTypeToString(String s){
