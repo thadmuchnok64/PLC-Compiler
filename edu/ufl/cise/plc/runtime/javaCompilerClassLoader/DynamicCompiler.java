@@ -19,7 +19,12 @@ public class DynamicCompiler {
 		List<JavaFileObject> sourceFiles = new ArrayList<>();
 		sourceFiles.add(new StringJavaFileObject(fullyQualifiedName, sourceCode));
 		
-		boolean success = compiler.getTask(null, fileManager, null, null, null, sourceFiles).call();
+		List<String> options = new ArrayList();
+        options.add("--release");
+        options.add("17");
+        options.add("--enable-preview");
+        boolean success = compiler.getTask(null, fileManager, null, options, null, sourceFiles).call();
+		//boolean success = compiler.getTask(null, fileManager, null, null, null, sourceFiles).call();
 		if (success) {
 			return fileManager.byteCodeObject.getBytes();
 		}
