@@ -200,7 +200,7 @@ public class CodeGenVisitor implements ASTVisitor {
     @Override
     public Object visitWriteStatement(WriteStatement writeStatement, Object arg) throws Exception {
         //\"\"\"\n"+writeStatement.getSource().getText()+"\"\"\"
-        return convertTypeToString(writeStatement.getSource().getType().toString().toLowerCase())+ " ConsoleIO.console.println("+writeStatement.getSource().getText()+");";
+        return "ConsoleIO.console.println("+writeStatement.getSource().getText()+");";
     }
 
     @Override
