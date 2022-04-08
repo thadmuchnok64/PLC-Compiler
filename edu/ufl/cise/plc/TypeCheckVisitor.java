@@ -216,6 +216,10 @@ public class TypeCheckVisitor implements ASTVisitor {
 	@Override
 	public Object visitIdentExpr(IdentExpr identExpr, Object arg) throws Exception {
 		String name = identExpr.getText();
+	//	if(arg instanceof Declaration){
+	//		symbolTable.lookup(name).setInitialized(true);
+	//		symbolTable.lookup())
+	//	}
 		Declaration dec = symbolTable.lookup(name);
 		if (arg instanceof Type) {
 			if ((Type) arg == BOOLEAN && dec.getType() == INT) {
@@ -313,7 +317,7 @@ public class TypeCheckVisitor implements ASTVisitor {
 
 	@Override
 	public Object visitWriteStatement(WriteStatement writeStatement, Object arg) throws Exception {
-		Type sourceType = (Type) writeStatement.getSource().visit(this, arg);
+		Type sourceType = (Type) writeStatement.getSource().visit(this, true);
 		Type destType = (Type) writeStatement.getDest().visit(this, arg);
 		check(destType == Type.STRING || destType == Type.CONSOLE, writeStatement,
 				"illegal destination type for write");
@@ -373,6 +377,8 @@ public class TypeCheckVisitor implements ASTVisitor {
 	@Override
 	public Object visitVarDeclaration(VarDeclaration declaration, Object arg) throws Exception {
 		try {
+
+
 			if (symbolTable.lookup(declaration.getName()) == null) {
 				if (declaration.getOp() != null && declaration.getOp().getKind() == Kind.ASSIGN) {
 					declaration.setInitialized(true);
