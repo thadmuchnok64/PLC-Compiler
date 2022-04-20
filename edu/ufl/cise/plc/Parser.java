@@ -281,6 +281,7 @@ public class Parser implements IParser {
                     int i;
                     Expr b=null,c=null,d=null;
                     for(i = 1 ; i < list.size();i++){
+                        parenShift++;
                         if(list.get(i).getKind()==Kind.COMMA){
                             b = (Expr)recursionParse(tokenlist);
                             tokenlist.clear();
@@ -291,6 +292,7 @@ public class Parser implements IParser {
                         }
                     }
                     for(i = i+1 ; i < list.size();i++){
+                        parenShift++;
                         if(list.get(i).getKind()==Kind.COMMA){
                             c = (Expr)recursionParse(tokenlist);
                             tokenlist.clear();
@@ -301,6 +303,7 @@ public class Parser implements IParser {
                         }
                     }
                     for(i = i+1 ; i < list.size();i++){
+                        parenShift++;
                         if(list.get(i).getKind()==Kind.RANGLE){
                             d = (Expr)recursionParse(tokenlist);
                             tokenlist.clear();
