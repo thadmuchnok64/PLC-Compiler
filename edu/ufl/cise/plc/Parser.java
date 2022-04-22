@@ -439,7 +439,8 @@ public class Parser implements IParser {
                         if(list.size()>2+parenShift){
                             if(list.get(2+parenShift).getKind() == Kind.KW_IF)
                             {
-                                throw new SyntaxException("Real good job there. No really. Im quite impressed. I don't know how you managed to mess it up this bad. I'm clapping. I'm happy for you. If only I was so blissfully ignorant.");
+                                //TODO: UHHHH
+                                //throw new SyntaxException("Real good job there. No really. Im quite impressed. I don't know how you managed to mess it up this bad. I'm clapping. I'm happy for you. If only I was so blissfully ignorant.");
                             }
                             IToken op = list.get(1+parenShift);
                             IToken first = list.get(0);
@@ -448,6 +449,10 @@ public class Parser implements IParser {
                             ASTNode b = recursionParse(list);
                             if(b instanceof BinaryExpr){
                                 BinaryExpr _b = (BinaryExpr)b;
+             //                   if(op.getKind()==Kind.ASSIGN){
+             //                       return b;
+                                    //return new BinaryExpr(first,bin,_b.getOp(),_b.getRight());
+               //                 }
                                 if(!compareOp(op.getKind(), _b.getOp().getKind())){
 
                                     ArrayList<BinaryExpr> binList = new ArrayList<BinaryExpr>();
@@ -457,7 +462,7 @@ public class Parser implements IParser {
                                     while(lefty instanceof BinaryExpr){
                                     
                                     //bin2 = new BinaryExpr(first,bin,lefty.getOp(),_b.getLeft());
-                                    
+
                                     if(!compareOp(op.getKind(), lefty.getOp().getKind())){
                                         
                                         BinaryExpr lefty2 = null;
@@ -523,6 +528,8 @@ public class Parser implements IParser {
     //Determines if left operator should take priority over right operator
     public boolean compareOp(Kind l, Kind r) throws SyntaxException{
         switch(l){
+            case ASSIGN:
+            return true;
             case OR, AND:
             switch(r){
                 case OR,AND:

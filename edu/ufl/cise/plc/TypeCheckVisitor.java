@@ -3,6 +3,7 @@ package edu.ufl.cise.plc;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.DelayQueue;
 
 import javax.lang.model.element.ModuleElement.DirectiveKind;
 import javax.print.DocFlavor.STRING;
@@ -156,6 +157,9 @@ public class TypeCheckVisitor implements ASTVisitor {
 		Type leftType = (Type) binaryExpr.getLeft().visit(this, arg);
 		Type rightType = (Type) binaryExpr.getRight().visit(this, arg);
 		Type resultType = null;
+		if(rightType==null&&leftType==null){
+			return Type.INT;
+		}
 		switch (op) {// AND, OR, PLUS, MINUS, TIMES, DIV, MOD, EQUALS, NOT_EQUALS, LT, LE, GT,GE
 			case EQUALS, NOT_EQUALS -> {
 				check(leftType == rightType, binaryExpr, "incompatible types for comparison");
@@ -168,6 +172,9 @@ public class TypeCheckVisitor implements ASTVisitor {
 					resultType = Type.FLOAT;
 				else if (leftType == Type.IMAGE && rightType == Type.IMAGE)
 					resultType = Type.IMAGE;
+				else if(leftType == Type.COLOR&&rightType == Type.COLOR){
+					resultType = Type.COLOR;
+				}
 				else if(leftType==Type.COLORFLOAT||rightType==Type.COLORFLOAT)
 					resultType = Type.COLORFLOAT;
 				else
@@ -182,6 +189,11 @@ public class TypeCheckVisitor implements ASTVisitor {
 					resultType = Type.FLOAT;
 				else if (leftType == Type.IMAGE && rightType == Type.IMAGE)
 					resultType = Type.IMAGE;
+					else if (leftType == Type.IMAGE && (rightType == Type.INT||rightType == Type.FLOAT)){
+						resultType = Type.IMAGE;
+					}else if(leftType == Type.COLOR&&rightType == Type.COLOR){
+						resultType = Type.COLOR;
+					}
 				else if(leftType==Type.COLORFLOAT||rightType==Type.COLORFLOAT)
 					resultType = Type.COLORFLOAT;
 				else if (leftType == Type.BOOLEAN && rightType == Type.BOOLEAN)
@@ -221,6 +233,17 @@ public class TypeCheckVisitor implements ASTVisitor {
 	//		symbolTable.lookup())
 	//	}
 		Declaration dec = symbolTable.lookup(name);
+		if(arg instanceof Boolean){
+			if((Boolean) arg == true){
+				//Type type = dec.getType();
+				if(symbolTable.contains(name)){
+					Type type = dec.getType();
+					identExpr.setType(type);
+					return type;
+				}
+				return null;
+		}
+		}
 		if (arg instanceof Type) {
 			if ((Type) arg == BOOLEAN && dec.getType() == INT) {
 				identExpr.setCoerceTo(INT);
@@ -241,8 +264,8 @@ public class TypeCheckVisitor implements ASTVisitor {
 	public Object visitConditionalExpr(ConditionalExpr conditionalExpr, Object arg) throws Exception {
 		conditionalExpr.getTrueCase().visit(this, null);
 		conditionalExpr.getFalseCase().visit(this, null);
-		conditionalExpr.getCondition().visit(this, null);
-		if (conditionalExpr.getCondition().getType() == Type.BOOLEAN
+		conditionalExpr.getCondition().visit(this, arg);
+		if (conditionalExpr.getCondition().getType() == Type.BOOLEAN||(arg instanceof Boolean&&(boolean)arg==true)
 				&& conditionalExpr.getTrueCase().getType() == conditionalExpr.getFalseCase().getType()) {
 					conditionalExpr.setType(conditionalExpr.getTrueCase().getType());
 
@@ -282,7 +305,35 @@ public class TypeCheckVisitor implements ASTVisitor {
 	// Work incrementally and systematically, testing as you go.
 	public Object visitAssignmentStatement(AssignmentStatement assignmentStatement, Object arg) throws Exception {
 
+		String localVar1 = null;
+		String localVar2 = null;
+
+		if((symbolTable.lookup(assignmentStatement.getName()) != null)&&assignmentStatement.getTargetDec()==null){
+			assignmentStatement.setTargetDec(symbolTable.lookup(assignmentStatement.getName()));
+		}
+		
+		if(assignmentStatement.getSelector()!=null && (symbolTable.lookup(assignmentStatement.getName()) != null)){
+
+			//	Declaration d = new VarDeclaration(assignmentStatement.getFirstToken(), nameDef, op, expr) symbolTable.lookup(assignmentStatement.getName()).getDim().getWidth();
+			localVar1 = assignmentStatement.getSelector().getX().getText();
+			localVar2 = assignmentStatement.getSelector().getY().getText();
+
+
+			symbolTable.insert(localVar1,new NameDef(null, "int",localVar1));
+			symbolTable.insert(localVar2,new NameDef(null, "int",localVar2));
+
+
+			assignmentStatement.getSelector().getX().visit(this, true);
+			assignmentStatement.getSelector().getY().visit(this, true);
+
+			assignmentStatement.getExpr().visit(this, true);
+
+
+			
+		} else{
+
 		assignmentStatement.getExpr().visit(this, arg);
+		}
 
 		if (symbolTable.lookup(assignmentStatement.getName()) == null) {
 			assignmentStatement.setTargetDec(new NameDef(assignmentStatement.getFirstToken(),
@@ -291,6 +342,7 @@ public class TypeCheckVisitor implements ASTVisitor {
 			symbolTable.lookup(assignmentStatement.getName()).setInitialized(true);
 
 		} else {
+			
 			if (symbolTable.lookup(assignmentStatement.getName()).getType() == assignmentStatement.getExpr()
 					.getType()) {
 				symbolTable.lookup(assignmentStatement.getName()).setInitialized(true);
@@ -311,6 +363,12 @@ public class TypeCheckVisitor implements ASTVisitor {
 			// throw new TypeCheckException("you uhh what, uhh hwat, what in the name of sam
 			// hell did you try to do right there. you do realize how stupid that mistake
 			// you made was, right?");
+		}
+		if(localVar1!=null){
+			symbolTable.remove(localVar1);
+		}
+		if(localVar2!=null){
+			symbolTable.remove(localVar2);
 		}
 		return null;
 	}
@@ -380,7 +438,7 @@ public class TypeCheckVisitor implements ASTVisitor {
 
 
 			if (symbolTable.lookup(declaration.getName()) == null) {
-				if (declaration.getOp() != null && declaration.getOp().getKind() == Kind.ASSIGN) {
+				if (declaration.getOp() != null && (declaration.getOp().getKind() == Kind.ASSIGN||declaration.getOp().getKind() == Kind.LARROW)) {
 					declaration.setInitialized(true);
 					if(declaration.getExpr()!=null){
 						declaration.getExpr().visit(this, arg);
@@ -464,7 +522,7 @@ public class TypeCheckVisitor implements ASTVisitor {
 
 	@Override
 	public Object visitUnaryExprPostfix(UnaryExprPostfix unaryExprPostfix, Object arg) throws Exception {
-		Type expType = (Type) unaryExprPostfix.getExpr().visit(this, arg);
+		Type expType = (Type) unaryExprPostfix.getExpr().visit(this, null);
 		check(expType == Type.IMAGE, unaryExprPostfix, "pixel selector can only be applied to image");
 		unaryExprPostfix.getSelector().visit(this, arg);
 		unaryExprPostfix.setType(Type.INT);
