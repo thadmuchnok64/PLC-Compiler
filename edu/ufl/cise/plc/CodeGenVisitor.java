@@ -6,9 +6,11 @@ import java.util.Set;
 
 import javax.lang.model.element.ModuleElement.DirectiveKind;
 import javax.print.DocFlavor.STRING;
+import javax.xml.transform.Source;
 
 import org.hamcrest.core.IsInstanceOf;
 import org.junit.jupiter.api.Named;
+import org.junit.jupiter.params.shadow.com.univocity.parsers.annotations.Replace;
 
 import edu.ufl.cise.plc.IToken.Kind;
 import edu.ufl.cise.plc.ast.ASTNode;
@@ -85,7 +87,28 @@ public class CodeGenVisitor implements ASTVisitor {
     public Object visitConsoleExpr(ConsoleExpr consoleExpr, Object arg) throws Exception {
         //return ConsoleIO.readValueFromConsole("INT", "HUH");
         usesConsole = true;
+        //if(consoleExpr.getCoerceTo()!=null)
         return "ConsoleIO.readValueFromConsole(\""+consoleExpr.getCoerceTo().toString()+"\", \"Please enter a value\")";
+       // return "ConsoleIO.readValueFromConsole(\""+consoleExpr.getCoerceTo().toString()+"\", \"Please enter a value\")";
+
+    }
+
+    private String ColorTupFixer(String s){
+        usesColor = true;
+        if(s.contains(".getRed()"))
+        {
+        s = s.replace(".getRed()", "");
+        s = "ColorTuple.getRed(ColorTuple.unpack("+s+"))";
+        }
+        if(s.contains(".getBlue()")){
+        s = s.replace(".getBlue()", "");
+        s = "ColorTuple.getBlue(ColorTuple.unpack("+s+"))";
+        }
+        if(s.contains(".getGreen()")){
+        s = s.replace(".getGreen()", "");
+        s = "ColorTuple.getGreen(ColorTuple.unpack("+s+"))";
+        }
+        return s;
     }
 
     @Override
@@ -93,11 +116,23 @@ public class CodeGenVisitor implements ASTVisitor {
         if(arg instanceof String){
             arg = true;
         }
-        return "new ColorTuple("+colorExpr.getRed().visit(this, arg)+","+colorExpr.getGreen().visit(this, arg)+","+colorExpr.getBlue().visit(this, arg)+")";
+        return "new ColorTuple("+ColorTupFixer(""+colorExpr.getRed().visit(this, arg))+","+ColorTupFixer(""+colorExpr.getGreen().visit(this, arg))+","+ColorTupFixer(""+colorExpr.getBlue().visit(this, arg))+")";
     }
 
     @Override
     public Object visitUnaryExpr(UnaryExpr unaryExpression, Object arg) throws Exception {
+        if(unaryExpression.getOp().getText().contains("getWidth")
+        ||unaryExpression.getOp().getText().contains("getHeight"))
+        {
+            return ""+unaryExpression.getExpr().visit(this, arg)+"."+unaryExpression.getOp().getText()+"()";
+        }
+        if(unaryExpression.getOp().getText().contains("getRed")
+        ||unaryExpression.getOp().getText().contains("getBlue")
+        ||unaryExpression.getOp().getText().contains("getGreen")){
+            usesColor = true;
+            return ""+unaryExpression.getExpr().visit(this, arg)+"."+unaryExpression.getOp().getText()+"()";
+
+        }
         return ""+unaryExpression.getFirstToken().getText()+unaryExpression.getExpr().visit(this, arg);
     }
 
@@ -107,12 +142,15 @@ public class CodeGenVisitor implements ASTVisitor {
         if(binaryExpr.getLeft().getType()==Type.COLOR&&binaryExpr.getRight().getType()==Type.COLOR){
             switch(binaryExpr.getOp().getText()){
                 case "==","!=",">",">=","<=","<":
-                return "("+binaryExpr.getLeft().visit(this, arg)+".red"+binaryExpr.getOp().getText()+binaryExpr.getRight().visit(this, arg)+".red && "+binaryExpr.getLeft().visit(this, arg)+".green"+binaryExpr.getOp().getText()+binaryExpr.getRight().visit(this, arg)+".green &&"+binaryExpr.getLeft().visit(this, arg)+".blue"+binaryExpr.getOp().getText()+binaryExpr.getRight().visit(this, arg)+".blue)";
+                usesColor = true;
+                return "(("+binaryExpr.getLeft().visit(this, arg)+").red"+binaryExpr.getOp().getText()+"("+binaryExpr.getRight().visit(this, arg)+").red && ("+binaryExpr.getLeft().visit(this, arg)+").green"+binaryExpr.getOp().getText()+"("+binaryExpr.getRight().visit(this, arg)+").green && ("+binaryExpr.getLeft().visit(this, arg)+").blue"+binaryExpr.getOp().getText()+"("+binaryExpr.getRight().visit(this, arg)+").blue)";
                 default:
+                usesColor = true;
                 return "new ColorTuple("+binaryExpr.getLeft().visit(this, arg)+".red"+binaryExpr.getOp().getText()+binaryExpr.getRight().visit(this, arg)+".red,"+binaryExpr.getLeft().visit(this, arg)+".green"+binaryExpr.getOp().getText()+binaryExpr.getRight().visit(this, arg)+".green,"+binaryExpr.getLeft().visit(this, arg)+".blue"+binaryExpr.getOp().getText()+binaryExpr.getRight().visit(this, arg)+".blue)";
             }
         }
         if(arg instanceof String&&((String)arg).equals("image")){
+            usesColor = true;
             return "new ColorTuple(ColorTuple.getRed("+binaryExpr.getLeft().visit(this, arg)+")"+binaryExpr.getOp().getText()+"ColorTuple.getRed("+binaryExpr.getRight().visit(this, arg)+"), ColorTuple.getGreen("+binaryExpr.getLeft().visit(this, arg)+")"+binaryExpr.getOp().getText()+"ColorTuple.getGreen("+binaryExpr.getRight().visit(this, arg)+"), ColorTuple.getBlue("+binaryExpr.getLeft().visit(this, arg)+")"+binaryExpr.getOp().getText()+"ColorTuple.getBlue("+binaryExpr.getRight().visit(this, arg)+"))";
 
         }
@@ -215,6 +253,12 @@ public class CodeGenVisitor implements ASTVisitor {
                 }
                 if(assignmentStatement.getExpr().visit(this,null).equals("CONDITION")){
                     usesBools = true;
+                    if(((String)conditionalStatements[1]).contains(".getRGB(")&&!((String)conditionalStatements[1]).contains("ColorTuple.unpack(")){
+                        conditionalStatements[1] = "(ColorTuple.unpack("+conditionalStatements[1]+"))";
+                    }
+                    if(((String)conditionalStatements[2]).contains(".getRGB(")&&!((String)conditionalStatements[1]).contains("ColorTuple.unpack(")){
+                        conditionalStatements[2] = "(ColorTuple.unpack("+conditionalStatements[2]+"))";
+                    }
                     return "for( int "+ assignmentStatement.getSelector().getX().visit(this,null) + " = 0; " + assignmentStatement.getSelector().getX().visit(this,null)+" < "+assignmentStatement.getName()+".getWidth(); "+assignmentStatement.getSelector().getX().visit(this,null)+"++) "+ "\n\tfor( int "+ assignmentStatement.getSelector().getY().visit(this,null) + " = 0; " + assignmentStatement.getSelector().getY().visit(this,null)+" < "+assignmentStatement.getName()+".getHeight(); "+assignmentStatement.getSelector().getY().visit(this,null)+"++) \n\t\tImageOps.setColor("+assignmentStatement.getName()+","+assignmentStatement.getSelector().getX().visit(this,null)+","+assignmentStatement.getSelector().getY().visit(this,null)+","+
                     "\n("+conditionalStatements[0]+")?\n("+conditionalStatements[1]+"):("+conditionalStatements[2]+"));\n";
                 }
@@ -286,6 +330,7 @@ public class CodeGenVisitor implements ASTVisitor {
         }
         if(assignmentStatement.getTargetDec()!=null&&assignmentStatement.getTargetDec().getDim()!=null&&assignmentStatement.getExpr().getType()==Type.IMAGE){
             usesImages = true;
+            usesColor = true;
             return "ImageOps.resize("+assignmentStatement.getName()+" , " + assignmentStatement.getExpr().visit(this, arg)+".getWidth(),"+assignmentStatement.getExpr().visit(this, arg)+".getHeight());\n"+
             "for( int x = 0; x < "+assignmentStatement.getName()+".getWidth(); x++)\n\t"+
             "for( int y = 0; y < "+ assignmentStatement.getName()+".getHeight(); y++) \n\t\t"+
@@ -303,11 +348,49 @@ String override[] = new String[2];
     public Object visitWriteStatement(WriteStatement writeStatement, Object arg) throws Exception {
         //\"\"\"\n"+writeStatement.getSource().getText()+"\"\"\"
         usesConsole = true;
-        return "ConsoleIO.console.println("+writeStatement.getSource().getText()+");\n";
+        if(writeStatement.getSource().getType()==Type.IMAGE){
+            return "ConsoleIO.displayImageOnScreen("+writeStatement.getSource().getText()+");\n";
+        } else if(writeStatement.getDest().getType()==Type.STRING){
+            usesFileIO = true;
+            return "FileURLIO.writeValue("+writeStatement.getSource().getText()+", "+writeStatement.getDest().visit(this, arg)+");\n";
+        }
+        else if(writeStatement.getSource().getType()==Type.COLOR||writeStatement.getSource().getType()==Type.COLORFLOAT){
+            //if(writeStatement.getSource() instanceof ColorExpr){
+                return "ConsoleIO.console.println("+writeStatement.getSource().visit(this, arg)+");\n";
+            //}
+        }
+        String x = writeStatement.getSource().getText();
+        boolean contains = false;
+        contains = x.contains("\"");
+       x = x.replace("\"", "");
+       x = x.replace("\\ADDQUOTE", "\"");
+       // x = x.replace("\t", "");
+       if(contains){
+        return "ConsoleIO.console.println(\"\"\"\n"+x+"\"\"\");\n";
+       } else{
+        return "ConsoleIO.console.println("+x+");\n";
+
+       }
     }
 
     @Override
     public Object visitReadStatement(ReadStatement readStatement, Object arg) throws Exception {
+        if(readStatement.getSource().getType()==Type.STRING&&readStatement.getSource().getCoerceTo()==Type.IMAGE){
+            usesFileIO = true;
+            return readStatement.getName()+"= FileURLIO.readImage("+readStatement.getSource().visit(this, arg)+","+readStatement.getTargetDec().getDim().visit(this, arg)+");\n";
+        } else if(readStatement.getSource().getType()==Type.STRING&&readStatement.getSource().getCoerceTo()==Type.FLOAT){
+           usesFileIO = true;
+            return readStatement.getName()+"= (Float) FileURLIO.readValueFromFile(("+readStatement.getSource().visit(this, arg)+"));";
+        } else if(readStatement.getSource().getType()==Type.STRING&&readStatement.getTargetDec().getType()==Type.INT){
+            usesFileIO = true;
+             return readStatement.getName()+"= (Integer) FileURLIO.readValueFromFile(("+readStatement.getSource().visit(this, arg)+"));";
+         } else if(readStatement.getSource().getType()==Type.STRING&&readStatement.getTargetDec().getType()==Type.COLOR){
+            usesFileIO = true;
+             return readStatement.getName()+"= (ColorTuple) FileURLIO.readValueFromFile(("+readStatement.getSource().visit(this, arg)+"));";
+         } else if(readStatement.getSource().getType()==Type.STRING&&readStatement.getTargetDec().getType()==Type.BOOLEAN){
+            usesFileIO = true;
+             return readStatement.getName()+"= (Boolean) FileURLIO.readValueFromFile(("+readStatement.getSource().visit(this, arg)+"));";
+         }
         return readStatement.getName() + " = (" + convertTypeToString(readStatement.getTargetDec().getType().toString().toLowerCase()) +")"+ readStatement.getSource().visit(this, arg)+";\n";
     }
 
@@ -426,6 +509,7 @@ public String convertTypeToString(String s){
     public Object visitVarDeclaration(VarDeclaration declaration, Object arg) throws Exception {
         //String s =  ""+convertTypeToString(declaration.getType().toString().toLowerCase()) +" " +declaration.getName()+"; ";
         String typeCon ="";
+       
         if(declaration.isInitialized()&&declaration.getExpr()!=null){
             if(declaration.getType()!=declaration.getExpr().getType()){
                 typeCon = "("+convertTypeToString(declaration.getType().toString().toLowerCase())+")";
@@ -453,23 +537,81 @@ public String convertTypeToString(String s){
                 }
                 if(declaration.getDim()!=null&&declaration.getExpr()instanceof IntLitExpr){
                    usesColor = true;
+                   usesImages = true;
                     return "BufferedImage "+declaration.getName()+" = new BufferedImage("+declaration.getDim().visit(this, arg)+",BufferedImage.TYPE_INT_RGB);\n"+
                     "for( int x = 0; x < "+declaration.getName()+".getWidth(); x++)\n\t"+
                     "for( int y = 0; y < "+ declaration.getName()+".getHeight(); y++) \n\t\t"+
                     "ImageOps.setColor("+declaration.getName()+
                     ",x,y,new ColorTuple("+declaration.getExpr().visit(this,arg)+","+declaration.getExpr().visit(this,arg)+","+declaration.getExpr().visit(this,arg)+"));\n"; 
                 }
-                if(declaration.getDim()!=null){
+                if(declaration.getDim()!=null&&declaration.getExpr().getType()==Type.IMAGE){
+                    usesImages = true;
+                    usesColor = true;
+                    return "BufferedImage "+declaration.getName()+" = new BufferedImage("+declaration.getDim().visit(this, arg)+",BufferedImage.TYPE_INT_RGB);\n"+
+                    "for( int x = 0; x < "+declaration.getName()+".getWidth(); x++)\n\t"+
+                    "for( int y = 0; y < "+ declaration.getName()+".getHeight(); y++) \n\t\t"+
+                    "ImageOps.setColor("+declaration.getName()+
+                    ",x,y,(ColorTuple.unpack("+declaration.getExpr().visit(this, arg)+".getRGB(x,y))));\n";
+                
+                }
+                if(declaration.getExpr() instanceof StringLitExpr||(declaration.getExpr() instanceof IdentExpr)){
+                    if(declaration.getExpr().getType() == Type.IMAGE){
+                        return convertTypeToString(declaration.getType().toString().toLowerCase())+" " +declaration.getNameDef().getName()+"="+declaration.getExpr().visit(this, arg)+";\n";
+                    }
+                    if(declaration.getDim()!=null){
                 return convertTypeToString(declaration.getType().toString().toLowerCase())+" " +declaration.getNameDef().getName()+"=FileURLIO.readImage("+declaration.getExpr().visit(this, arg)+","+declaration.getDim().visit(this, arg)+");\n";
                 } else {
                     return convertTypeToString(declaration.getType().toString().toLowerCase())+" " +declaration.getNameDef().getName()+"=FileURLIO.readImage("+declaration.getExpr().visit(this, arg)+",null,null);\n";
-
                 }   
+            }
+
+                usesImages = true;
+                usesColor = true;
+                
+                String v = (String)declaration.getExpr().visit(this, arg);
+                if(((String)declaration.getExpr().visit(this, arg)).contains(".getRed()")){
+                   v = v.replace(".getRed()", "");
+                   return "BufferedImage "+declaration.getName()+" = ImageOps.extractRed("+v+");\n";
+
+                }
+                if(((String)declaration.getExpr().visit(this, arg)).contains(".getBlue()")){
+                    v = v.replace(".getBlue()", "");
+                    return "BufferedImage "+declaration.getName()+" = ImageOps.extractBlue("+v+");\n";
+
+                 }
+                 if(((String)declaration.getExpr().visit(this, arg)).contains(".getGreen()")){
+                    v = v.replace(".getGreen()", "");
+                    return "BufferedImage "+declaration.getName()+" = ImageOps.extractGreen("+v+");\n";
+
+                 }
+
+                 return "BufferedImage "+declaration.getName()+" = "+v+";\n";
+
+
+               // return "BufferedImage "+declaration.getName()+" = new BufferedImage("+v+".getWidth(),"+v+".getHeight(),BufferedImage.TYPE_INT_RGB);\n"+
+               // "for( int x = 0; x < "+declaration.getName()+".getWidth(); x++)\n\t"+
+                //"for( int y = 0; y < "+ declaration.getName()+".getHeight(); y++) \n\t\t"+
+                //"ImageOps.setColor("+declaration.getName()+
+                //",x,y,(ColorTuple.unpack("+declaration.getExpr().visit(this, arg)+".getRGB(x,y))));\n";
             }
             }else if(declaration.getNameDef().getType()==Type.COLOR){
                 usesColor = true;
+                if(declaration.getExpr().getType() == Type.INT){
+                    return "ColorTuple "+declaration.getName()+" = ColorTuple.unpack("+declaration.getExpr().visit(this, arg)+");\n";
+                } else if( declaration.getExpr().getType() == Type.STRING){
+                    usesFileIO = true;
+                return "ColorTuple "+declaration.getName()+"= (ColorTuple) FileURLIO.readValueFromFile(("+declaration.getExpr().visit(this, arg)+"));";
+                }
                 return "ColorTuple "+declaration.getName()+" = "+declaration.getExpr().visit(this, arg)+";\n";
             }else{
+                if(declaration.getOp().getKind()==Kind.LARROW&&(declaration.getExpr() instanceof StringLitExpr || declaration.getExpr() instanceof IdentExpr)){
+                    return ""+convertTypeToString(declaration.getType().toString().toLowerCase()) +" " +declaration.getName() + " = (("+convertTypeToString(declaration.getType().toString().toLowerCase())+") FileURLIO.readValueFromFile("+declaration.getExpr().visit(this, arg)+"));";
+                }
+                if(declaration.getExpr().getType()==Type.COLOR&&(declaration.getType()==Type.INT||declaration.getType()==Type.FLOAT)){
+                    usesColor = true;
+                    return ""+convertTypeToString(declaration.getType().toString().toLowerCase()) +" " +declaration.getName() +" = ColorTuple.makePackedColor("+declaration.getExpr().visit(this, arg)+".red,"+declaration.getExpr().visit(this, arg)+".green,"+declaration.getExpr().visit(this, arg)+".blue"+");\n ";
+
+                }
             return ""+convertTypeToString(declaration.getType().toString().toLowerCase()) +" " +declaration.getName() +" = "+typeCon+declaration.getExpr().visit(this, arg)+";\n ";
             }
         } else {
@@ -482,6 +624,10 @@ public String convertTypeToString(String s){
 
     @Override
     public Object visitUnaryExprPostfix(UnaryExprPostfix unaryExprPostfix, Object arg) throws Exception {
+       if(unaryExprPostfix.getSelector()!=null){
+           return ""+unaryExprPostfix.getFirstToken().getText()+".getRGB("+unaryExprPostfix.getSelector().getX().visit(this, arg)+","+unaryExprPostfix.getSelector().getY().visit(this, arg)+")";
+
+       }
         return ""+unaryExprPostfix.getFirstToken().getText()+".getRGB(x, y)";
         //return null;
     }

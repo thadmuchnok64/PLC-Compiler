@@ -135,7 +135,7 @@ public class Lexer implements ILexer {
         //boolean commentMode = false;
 
         posX = posX -1;
-
+        char lastChar = '0';
         while (!endScan&&(posX+1)<chars.get(posY).size()){
             posX++;
             boolean whitespace = false;
@@ -303,7 +303,13 @@ public class Lexer implements ILexer {
             } else if (currentState==State.HAVE_STRING){
                 str = str + ch;
                 endScan = false;
-                if(ch=='\"'){
+                if(ch=='\"'&&lastChar=='\\'){
+                    str = str + "ADDQUOTE";
+                   // str = str + '\"';
+
+                }
+                if(ch=='\"'&&lastChar!='\\'){
+                    
                     posX++;//hmm
                     endScan = true;
                 }
@@ -319,6 +325,7 @@ public class Lexer implements ILexer {
                     posY++;
                 }
             }
+            lastChar = ch;
     }
         switch(currentState)
             {
@@ -372,7 +379,6 @@ public class Lexer implements ILexer {
                 column = posX;
                 row = posY;
             }
-
             return newToken;
     }
 

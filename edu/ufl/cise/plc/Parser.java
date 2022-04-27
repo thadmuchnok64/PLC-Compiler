@@ -172,7 +172,7 @@ public class Parser implements IParser {
                         List<NameDef> params;
                         params = new ArrayList<>();
                         ArrayList<IToken> paramTokens = new ArrayList<>();
-                        if(list.size()>2&&list.get(2).getKind()!=Kind.LPAREN&&list.get(1).getKind()==Kind.LSQUARE){
+                        if(list.size()>2&&(list.get(1).getKind()==Kind.LSQUARE)){
                             int i = 2;
                             ArrayList<IToken> tlist = new ArrayList<>();
                             ArrayList<IToken> tlist2 = new ArrayList<>();
@@ -218,6 +218,10 @@ public class Parser implements IParser {
                                     }
                                     paramTokens.clear();
                                 } catch (Exception e) {
+                                    //throw new SyntaxException("Stinky");
+                                  if(paramTokens.size()>0&&paramTokens.get(0).getKind()!=Kind.TYPE){
+                                        throw new SyntaxException("Stinky made");
+                                    }
                                     break;
                                 }
                                 break;
@@ -278,37 +282,55 @@ public class Parser implements IParser {
                 ArrayList<IToken> tokenlist = new ArrayList<>();
 
                 try {
+                    int parenTracker = 0;
                     int i;
                     Expr b=null,c=null,d=null;
                     for(i = 1 ; i < list.size();i++){
                         parenShift++;
-                        if(list.get(i).getKind()==Kind.COMMA){
+                        if(list.get(i).getKind()==Kind.COMMA&&parenTracker<1){
                             b = (Expr)recursionParse(tokenlist);
                             tokenlist.clear();
                             break;
                         } else{
+                            if(list.get(i).getKind()==Kind.LPAREN||list.get(i).getKind()==Kind.LPAREN||list.get(i).getKind()==Kind.LSQUARE){
+                                parenTracker++;
+                            } else if (list.get(i).getKind()==Kind.RPAREN||list.get(i).getKind()==Kind.RPAREN||list.get(i).getKind()==Kind.RSQUARE){
+                                parenTracker--;
+                            }
                             tokenlist.add(list.get(i));
 
                         }
                     }
+                    parenTracker = 0;
                     for(i = i+1 ; i < list.size();i++){
                         parenShift++;
-                        if(list.get(i).getKind()==Kind.COMMA){
+                        if(list.get(i).getKind()==Kind.COMMA&&parenTracker<1){
                             c = (Expr)recursionParse(tokenlist);
                             tokenlist.clear();
                             break;
                         } else{
+                            if(list.get(i).getKind()==Kind.LPAREN||list.get(i).getKind()==Kind.LPAREN||list.get(i).getKind()==Kind.LSQUARE){
+                                parenTracker++;
+                            } else if (list.get(i).getKind()==Kind.RPAREN||list.get(i).getKind()==Kind.RPAREN||list.get(i).getKind()==Kind.RSQUARE){
+                                parenTracker--;
+                            }
                             tokenlist.add(list.get(i));
 
                         }
                     }
+                    parenTracker = 0;
                     for(i = i+1 ; i < list.size();i++){
                         parenShift++;
-                        if(list.get(i).getKind()==Kind.RANGLE){
+                        if(list.get(i).getKind()==Kind.RANGLE&&parenTracker<1){
                             d = (Expr)recursionParse(tokenlist);
                             tokenlist.clear();
                             break;
                         } else{
+                            if(list.get(i).getKind()==Kind.LPAREN||list.get(i).getKind()==Kind.LPAREN||list.get(i).getKind()==Kind.LSQUARE){
+                                parenTracker++;
+                            } else if (list.get(i).getKind()==Kind.RPAREN||list.get(i).getKind()==Kind.RPAREN||list.get(i).getKind()==Kind.RSQUARE){
+                                parenTracker--;
+                            }
                             tokenlist.add(list.get(i));
 
                         }
@@ -383,6 +405,8 @@ public class Parser implements IParser {
                         break;
                         case ASSIGN:
                         return new AssignmentStatement(t,a.getText(),null,(Expr)recursionParse(list,2));
+                        case COLOR_OP:
+                        throw new SyntaxException("Stinky");
                         case LSQUARE:
                             
 
@@ -453,8 +477,8 @@ public class Parser implements IParser {
              //                       return b;
                                     //return new BinaryExpr(first,bin,_b.getOp(),_b.getRight());
                //                 }
-                                if(!compareOp(op.getKind(), _b.getOp().getKind())){
-
+                                if(!(list.size()>0&&list.get(0).getKind()==Kind.LPAREN)&& !compareOp(op.getKind(), _b.getOp().getKind())){
+                                    
                                     ArrayList<BinaryExpr> binList = new ArrayList<BinaryExpr>();
                                 if(_b.getLeft() instanceof BinaryExpr){
                                     BinaryExpr lefty = (BinaryExpr)_b.getLeft();

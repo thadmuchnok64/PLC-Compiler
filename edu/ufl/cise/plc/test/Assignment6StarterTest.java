@@ -613,6 +613,8 @@ Series of tests that checks for imports; you must manually check by looking at y
 	}
 
 
+	
+
 	/*
 @Test	
 	// first program:
@@ -620,7 +622,7 @@ Series of tests that checks for imports; you must manually check by looking at y
 	// must import edu.ufl.cise.plc.runtime.FileURLIO for write assignment
 	
 	// second program:
-	// must import edu.ufl.cise.plc.runtime.ColorTuple for first declaration 
+	// must import edu.ufl.cise.plc.ruzntime.ColorTuple for first declaration 
 	// must import import edu.ufl.cise.plc.runtime.FileURLIO for read assignment
 	// must import edu.ufl.cise.plc.runtime.ConsoleIO for write assignment
 	void importTest5() throws Exception {

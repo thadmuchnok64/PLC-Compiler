@@ -10,6 +10,7 @@ import java.awt.image.BufferedImage;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.InputMismatchException;
 import java.util.Scanner;
 
@@ -22,11 +23,12 @@ public class ConsoleIO {
 
 	/**
 	 * Destination of "console" output. Can be changed to redirect output. Generated
-	 * code should use ConsoleIO.console.println(...) etc. instead of System.out.println
+	 * code should use ConsoleIO.console.println(...) etc. instead of
+	 * System.out.println
 	 */
 	public static PrintStream console = System.out;
-	
-	/** 
+
+	/**
 	 * change destination of console output for non-image types
 	 */
 	public static void setConsole(PrintStream out) {
@@ -35,7 +37,7 @@ public class ConsoleIO {
 
 	/** Default source of "console" input. */
 	public static InputStream consoleInput = System.in;
-	
+
 	/** Change source of "console" input */
 	public static void setConsoleInput(InputStream in) {
 		consoleInput = in;
@@ -53,6 +55,13 @@ public class ConsoleIO {
 		return scanner;
 	}
 
+	public static void resetScanner() {
+		if (scanner != null) {
+			scanner.close();
+			scanner = null;
+		}
+	}
+
 	/**
 	 * Reads a value of the given type from the console. The type must be one of
 	 * "INT", "FLOAT", "STRING", or "COLOR". If the scanner cannot convert the input
@@ -66,7 +75,7 @@ public class ConsoleIO {
 	 * @return
 	 */
 	public static Object readValueFromConsole(String type, String prompt) {
-		console.print(prompt);
+		System.out.print(prompt);
 		Scanner scanner = getScanner();
 		try {
 			return switch (type) {
@@ -98,39 +107,45 @@ public class ConsoleIO {
 			default -> throw new IllegalArgumentException("Compiler bug Unexpected value: " + type);
 			};
 		} catch (InputMismatchException e) {
-			console.print("INVALID INPUT ");
+			System.out.print("INVALID INPUT ");
 			getScanner().next(); // throw away invalid input token
 			return readValueFromConsole(type, prompt);
 		}
 	}
 
-	/**
-	 * Displays the given image on the screen.
-	 * 
-	 * @param image
-	 */
+	public static boolean DISPLAY_IMAGES = true;
+	public static ArrayList<BufferedImage> consoleImages = new ArrayList<>();
+
 	public static void displayImageOnScreen(BufferedImage image) {
-		System.err.println("Displaying image = " + image);
-		JFrame frame = new JFrame();
-		frame.setDefaultCloseOperation(EXIT_ON_CLOSE);
-		frame.setSize(image.getWidth(), image.getHeight());
-		JLabel label = new JLabel(new ImageIcon(image));
-		frame.add(label);
-		frame.pack();
-		try {
-			SwingUtilities.invokeAndWait(new Runnable() {
-				public void run() {
-					frame.setVisible(true);
-				}
-			});
-		} catch (InvocationTargetException | InterruptedException e) {
-			e.printStackTrace();
+		consoleImages.add(image);
+		if (DISPLAY_IMAGES) {
+			System.err.println("Displaying image = " + image);
+			JFrame frame = new JFrame();
+			frame.setDefaultCloseOperation(EXIT_ON_CLOSE);
+			frame.setSize(image.getWidth(), image.getHeight());
+			JLabel label = new JLabel(new ImageIcon(image));
+			frame.add(label);
+			frame.pack();
+			try {
+				SwingUtilities.invokeAndWait(new Runnable() {
+					public void run() {
+						frame.setVisible(true);
+					}
+				});
+			} catch (InvocationTargetException | InterruptedException e) {
+				e.printStackTrace();
+			}
 		}
+
 	}
-	
+
+	public static void resetConsoleImages() {
+		consoleImages = new ArrayList<>();
+	}
+
 	/**
-	 * Displays the given image on the screen.
-	 * The difference between this and displayImageOnScreen is the location of the image.
+	 * Displays the given image on the screen. The difference between this and
+	 * displayImageOnScreen is the location of the image.
 	 * 
 	 * @param image
 	 */
@@ -153,7 +168,5 @@ public class ConsoleIO {
 			e.printStackTrace();
 		}
 	}
-
-	
 
 }

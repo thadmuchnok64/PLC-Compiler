@@ -1,5 +1,6 @@
 package edu.ufl.cise.plc;
 
+import java.io.Console;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -262,8 +263,8 @@ public class TypeCheckVisitor implements ASTVisitor {
 
 	@Override
 	public Object visitConditionalExpr(ConditionalExpr conditionalExpr, Object arg) throws Exception {
-		conditionalExpr.getTrueCase().visit(this, null);
-		conditionalExpr.getFalseCase().visit(this, null);
+		conditionalExpr.getTrueCase().visit(this, arg);
+		conditionalExpr.getFalseCase().visit(this, arg);
 		conditionalExpr.getCondition().visit(this, arg);
 		if (conditionalExpr.getCondition().getType() == Type.BOOLEAN||(arg instanceof Boolean&&(boolean)arg==true)
 				&& conditionalExpr.getTrueCase().getType() == conditionalExpr.getFalseCase().getType()) {
@@ -406,7 +407,13 @@ public class TypeCheckVisitor implements ASTVisitor {
 						symbolTable.lookup(readStatement.getName()).setInitialized(true);
 						readStatement.setTargetDec(new NameDef(readStatement.getFirstToken(),
 								readStatement.getSource().getType().toString().toLowerCase(), readStatement.getName()));
-					} else if (symbolTable.lookup(readStatement.getName()).getType() == INT
+					} else if (symbolTable.lookup(readStatement.getName()).getType() == IMAGE
+					&& readStatement.getSource().getType() == STRING) {
+				readStatement.getSource().setCoerceTo(IMAGE);
+				symbolTable.lookup(readStatement.getName()).setInitialized(true);
+				readStatement.setTargetDec(symbolTable.lookup(readStatement.getName()));
+				//readStatement.setTargetDec(new NameDefWithDim(readStatement.getFirstToken(),readStatement.getSource().getType().toString().toLowerCase(), readStatement.getName(), dim);
+			}	else if (symbolTable.lookup(readStatement.getName()).getType() == INT
 							&& readStatement.getSource().getType() == STRING) {
 						readStatement.setTargetDec(new NameDef(readStatement.getFirstToken(),
 								symbolTable.lookup(readStatement.getName()).getType().toString().toLowerCase(),
@@ -420,6 +427,34 @@ public class TypeCheckVisitor implements ASTVisitor {
 								readStatement.getName()));
 						readStatement.getSource().setCoerceTo(INT);
 						symbolTable.lookup(readStatement.getName()).setInitialized(true);
+					} else if(symbolTable.lookup(readStatement.getName()).getType() == FLOAT
+					&&(readStatement.getSource().getType()==STRING||readStatement.getSource().getType()==CONSOLE)){
+						readStatement.setTargetDec(new NameDef(readStatement.getFirstToken(),
+						symbolTable.lookup(readStatement.getName()).getType().toString().toLowerCase(),
+						readStatement.getName()));
+				readStatement.getSource().setCoerceTo(FLOAT);
+				symbolTable.lookup(readStatement.getName()).setInitialized(true);
+					} else if(symbolTable.lookup(readStatement.getName()).getType() == BOOLEAN
+					&&(readStatement.getSource().getType()==STRING||readStatement.getSource().getType()==CONSOLE)){
+						readStatement.setTargetDec(new NameDef(readStatement.getFirstToken(),
+						symbolTable.lookup(readStatement.getName()).getType().toString().toLowerCase(),
+						readStatement.getName()));
+				readStatement.getSource().setCoerceTo(BOOLEAN);
+				symbolTable.lookup(readStatement.getName()).setInitialized(true);
+					} else if(symbolTable.lookup(readStatement.getName()).getType() == STRING
+					&&(readStatement.getSource().getType()==STRING||readStatement.getSource().getType()==CONSOLE)){
+						readStatement.setTargetDec(new NameDef(readStatement.getFirstToken(),
+						symbolTable.lookup(readStatement.getName()).getType().toString().toLowerCase(),
+						readStatement.getName()));
+				readStatement.getSource().setCoerceTo(STRING);
+				symbolTable.lookup(readStatement.getName()).setInitialized(true);
+					} else if(symbolTable.lookup(readStatement.getName()).getType() == COLOR
+					&&(readStatement.getSource().getType()==STRING||readStatement.getSource().getType()==CONSOLE)){
+						readStatement.setTargetDec(new NameDef(readStatement.getFirstToken(),
+						symbolTable.lookup(readStatement.getName()).getType().toString().toLowerCase(),
+						readStatement.getName()));
+				readStatement.getSource().setCoerceTo(COLOR);
+				symbolTable.lookup(readStatement.getName()).setInitialized(true);
 					}
 				}
 				// throw new TypeCheckException("you uhh what, uhh hwat, what in the name of sam
@@ -435,7 +470,9 @@ public class TypeCheckVisitor implements ASTVisitor {
 	@Override
 	public Object visitVarDeclaration(VarDeclaration declaration, Object arg) throws Exception {
 		try {
-
+			if(declaration.getExpr() instanceof ConsoleExpr){
+				declaration.getExpr().setCoerceTo(declaration.getType());
+			}
 
 			if (symbolTable.lookup(declaration.getName()) == null) {
 				if (declaration.getOp() != null && (declaration.getOp().getKind() == Kind.ASSIGN||declaration.getOp().getKind() == Kind.LARROW)) {
@@ -450,6 +487,10 @@ public class TypeCheckVisitor implements ASTVisitor {
 						// declaration.setCoerceTo();
 					}
 				}
+			//	if(declaration.getExpr() instanceof UnaryExpr&&((UnaryExpr)declaration.getExpr()).getExpr() instanceof IdentExpr){
+			//		Dimension d = symbolTable.lookup(((IdentExpr)((UnaryExpr)declaration.getExpr()).getExpr()).getText()).getDim();
+			//		declaration.
+			//	}
 				symbolTable.insert(declaration.getName(), declaration);
 				return null;
 			} else {
