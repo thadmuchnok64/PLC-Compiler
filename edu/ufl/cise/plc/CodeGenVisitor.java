@@ -196,7 +196,7 @@ public class CodeGenVisitor implements ASTVisitor {
                 } else if(binaryExpr.getOp().getKind()==Kind.NOT_EQUALS){
                     return "!(" + binaryExpr.getLeft().visit(this,arg) + ".equals(" + binaryExpr.getRight().visit(this,arg)+"))";
                 } else{
-                    throw new UnsupportedOperationException("what the fuck");
+                    throw new UnsupportedOperationException("what the heck");
                 }
             }
 

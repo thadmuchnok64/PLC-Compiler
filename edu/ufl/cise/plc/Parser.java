@@ -162,7 +162,7 @@ public class Parser implements IParser {
                             throw new Exception();
                         }
                     } catch (Exception e) {
-                        throw new SyntaxException("your if-statement is missing something, you sentient bag of burger meat");
+                        throw new SyntaxException("your if-statement is missing something, you sentient trashcan");
                     }
                     a= new ConditionalExpr(t, condition, trueCase, falseCase);
 
@@ -265,7 +265,7 @@ public class Parser implements IParser {
                             }
                         }
                         if(list.get(1).getKind()!=Kind.IDENT){
-                            throw new SyntaxException("What kind of shit did you just try to name your function???!?!1 Dumbass");
+                            throw new SyntaxException("What did you just try to name your function???!?!1");
                         }
                         a = new Program(t,Type.toType(t.getText()),list.get(1).getText(),params,nodeList);
                     } catch (Exception e) {
@@ -339,7 +339,7 @@ public class Parser implements IParser {
                     a= new ColorExpr(t,b,c,d);
 
                 } catch (Exception e) {
-                    throw new SyntaxException("Looks like you tried to make a color that doesn't exist, dumbo");
+                    throw new SyntaxException("Looks like you tried to make a color that doesn't exist");
                 }
                 break;
                 case RETURN:
@@ -358,7 +358,6 @@ public class Parser implements IParser {
                     //if(newNode instanceof Expr)
                     return new UnaryExpr(t, t, (Expr)recursionParse(list));
                    // else 
-                    //throw new LexicalException("You pile of catshit. Look at what you did to the code");
                 case LPAREN:
                 ArrayList<IToken> newList = new ArrayList<>();
                 int i = 1;
@@ -400,7 +399,7 @@ public class Parser implements IParser {
                     switch(list.get(1+parenShift).getKind()){
                         case IDENT:
                         if(t.getKind()!=Kind.KW_VOID&&t.getKind()!=Kind.TYPE){
-                            throw new SyntaxException("looks like you didn't put a type or void before your function, shitferbrains.");
+                            throw new SyntaxException("looks like you didn't put a type or void before your function, silly goose.");
                         }
                         break;
                         case ASSIGN:
@@ -536,7 +535,7 @@ public class Parser implements IParser {
                                 return new BinaryExpr(first,(Expr)a,op,(Expr)b);
                             }
                         } else{
-                            throw new SyntaxException("Oopsie you made a stinky and forgot something important. Clean it up, you bastard");
+                            throw new SyntaxException("Oopsie you made a stinky and forgot something important. Clean it up, pronto");
                         }
                         
                     //a= new PixelSelector(t, x, y);

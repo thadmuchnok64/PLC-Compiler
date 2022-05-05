@@ -233,7 +233,7 @@ public class Lexer implements ILexer {
                        // currentState = State.HAVE_ZERO;
                         //str = str + ch;
                        // endScan = false;
-                       throw new LexicalException("Uhhhh looks like you put a decimal statement without a zero. I guess that's not supposed to work in this programming language for some reason???");
+                       throw new LexicalException("Uhhhh looks like you put a decimal statement without a zero. I guess that doesnt work in this programming language for some reason???");
                     }
                     break;
                     case '\b','\t','\n','\f','\r','"','\'','\\',' ','#':
@@ -293,7 +293,7 @@ public class Lexer implements ILexer {
                     break;
                     default:
                     if(currentState==State.START)
-                        throw new LexicalException("oopsie poopsie, looks like you made an invalid term.");
+                        throw new LexicalException("oopsie, looks like you made an invalid term.");
                     break;
 
                    
@@ -346,7 +346,7 @@ public class Lexer implements ILexer {
                 newToken = new Token(Kind.INT_LIT,str,str.length(),startLine,startPos);
                 break;
                 case HAVE_DOT:
-                    throw new UnsupportedOperationException("excuse me what in the name of ass did you just attempt to compile");
+                    throw new UnsupportedOperationException("excuse me what did you just attempt to compile");
                 case IN_FLOAT:
                     newToken = new Token(Kind.FLOAT_LIT,str,str.length(),startLine,startPos);
                 break;
@@ -357,7 +357,7 @@ public class Lexer implements ILexer {
                     newToken = new Token(Kind.INT_LIT,str,str.length(),startLine,startPos);
                     } catch(Exception e){
                         newToken = new Token(theKindMap.get(str),str,str.length(),startLine,startPos);
-                        throw new LexicalException("You piece of shit, you entered a number that is WAAAAAYYY TOO BIG. What are you even doing, kid?!");
+                        throw new LexicalException("You entered a number that is WAAAAAYYY TOO BIG. What are you even doing, kid?!");
                     }
                 }
                 break;
@@ -372,7 +372,7 @@ public class Lexer implements ILexer {
                 }
                 break;
                 default:
-                throw new LexicalException("How the fuck did you get here?");
+                throw new LexicalException("How did you get here?");
             }
 
             if(increments){
