@@ -463,7 +463,7 @@ public class TypeCheckVisitor implements ASTVisitor {
 			}
 			return null;
 		} catch (Exception e) {
-			throw new TypeCheckException("What in the sam hell happened here? Did you use the right type for reading?");
+			throw new TypeCheckException("What happened here? Did you use the right type for reading?");
 		}
 	}
 

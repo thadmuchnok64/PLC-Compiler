@@ -69,7 +69,7 @@ public class Token implements IToken
             }
             return result;
         } else{
-            throw new UnsupportedOperationException("oh mah god");
+            throw new UnsupportedOperationException("oh mah god, you must have done something REALLY wrong if you got this error...");
         }
     }
     
